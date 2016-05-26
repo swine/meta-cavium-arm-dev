@@ -11,7 +11,6 @@ def elt_run(d, cmd, *args):
 	target_prefix = d.getVar('TARGET_PREFIX', True)
 	path = os.path.join(toolchain_path, 'bin', target_prefix + cmd)
 	args = [path] + list(args)
-	bb.error('args=%s' % args);
 	return bb.process.run(args, cwd=topdir, stderr=subprocess.PIPE)
 
 def elt_get_version(d):
@@ -27,7 +26,6 @@ def elt_get_version(d):
 # Extract the YYYY.MM version
 def elt_get_main_version(d):
 	version = elt_get_version(d)
-	bb.error('Trying for parse version info from: %s' % version)
         return '5.3.0'
 
 # Extract the x.y.z version from 'gcc version 4.9.1'

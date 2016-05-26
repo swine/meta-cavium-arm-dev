@@ -69,20 +69,12 @@ do_install() {
 	install -d ${D}/lib
 	install -d ${D}/usr/lib
 
-	echo $libdir >~/mjlog
-	echo $base_libdir >> ~/mjlog
-	echo $includedir  >> ~/mjlog
-
-	echo "Copy all files from cav-tc/lib to lib"
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/lib/*  ${D}/lib
 	
-	echo "Copy all files from cav-tc/lib64 to lib64"
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root${base_libdir}/*  ${D}${base_libdir}
 	
-	echo "Copy all from cav-tc/sys-root/usr/lib to /usr/lib"
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/usr/lib/*  ${D}/usr/lib
 	
-	echo "Copy all from cav-tc/sys-root/usr/lib64 to /usr/lib64"
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/${libdir}/*  ${D}${libdir}
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/${libdir}/crt*.*  ${D}/usr/lib
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/${libdir}/crt?.*  ${D}${base_libdir}
@@ -95,9 +87,7 @@ do_install() {
 		rm ${D}${base_libdir}/ld-linux-aarch64.so.1
 	fi
 	
-	echo "Copy usr/share "
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/usr/share/*  ${D}${datadir}
-	echo "Copy usr/include "
 	cp -a ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/usr/include/*  ${D}${includedir}
 
 	if [ -d ${EXTERNAL_TOOLCHAIN}/${ELT_TARGET_SYS}/sys-root/usr/include/${ELT_TARGET_SYS} ]; then
