@@ -1,0 +1,25 @@
+From a21c70e240f49781afdc639d81b8b924e8ea65e3 Mon Sep 17 00:00:00 2001
+From: Yury Norov <ynorov@caviumnetworks.com>
+Date: Wed, 30 Mar 2016 00:16:12 +0300
+Subject: [PATCH 25/25] fix sig32_common
+
+---
+ arch/arm64/kernel/signal32_common.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm64/kernel/signal32_common.c b/arch/arm64/kernel/signal32_common.c
+index 1146f82..8fbb609 100644
+--- a/arch/arm64/kernel/signal32_common.c
++++ b/arch/arm64/kernel/signal32_common.c
+@@ -69,7 +69,7 @@ int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from)
+ #ifdef BUS_MCEERR_AO
+ 		/*
+ 		 * Other callers might not initialize the si_lsb field,
+-		 * so check explicitely for the right codes here.
++		 * so check explicitly for the right codes here.
+ 		 */
+ 		if (from->si_signo == SIGBUS &&
+ 		    (from->si_code == BUS_MCEERR_AR || from->si_code == BUS_MCEERR_AO))
+-- 
+2.1.4
+
