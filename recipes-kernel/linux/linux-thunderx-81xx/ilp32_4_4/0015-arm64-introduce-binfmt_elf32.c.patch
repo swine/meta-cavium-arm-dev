@@ -1,7 +1,7 @@
-From c3015e4cbbe0ca4f1376a3f6606f9d7fb1713cf6 Mon Sep 17 00:00:00 2001
+From 0e20d0a9c8be168e112943b91646b5d94767bb71 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Mon, 23 May 2016 16:47:26 -0700
-Subject: [PATCH 17/25] arm64: introduce binfmt_elf32.c
+Date: Tue, 24 May 2016 03:04:44 +0300
+Subject: [PATCH 15/24] arm64: introduce binfmt_elf32.c
 
 As we support more than one compat formats, it looks more reasonable
 to not use fs/compat_binfmt.c. Custom binfmt_elf32.c allows to move aarch32
@@ -18,12 +18,12 @@ Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
  create mode 100644 arch/arm64/kernel/binfmt_elf32.c
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 6543008..96755a0 100644
+index ef8bddf..9ce37af 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -825,7 +825,6 @@ config COMPAT
- config AARCH32_EL0
+@@ -826,7 +826,6 @@ config AARCH32_EL0
  	bool "Kernel support for 32-bit EL0"
+ 	def_bool y
  	depends on ARM64_4K_PAGES || EXPERT
 -	select COMPAT_BINFMT_ELF
  	select HAVE_UID16
@@ -137,5 +137,5 @@ index 0000000..5487872
 +
 +#include "../../../fs/compat_binfmt_elf.c"
 -- 
-2.1.4
+1.9.1
 

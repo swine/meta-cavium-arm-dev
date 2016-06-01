@@ -1,7 +1,7 @@
-From b388f431b26e7257655b7b0949dcd895eafcbd42 Mon Sep 17 00:00:00 2001
+From ffe80398c062e50952b490a5e254b6b23d058ff4 Mon Sep 17 00:00:00 2001
 From: Andrew Pinski <apinski@cavium.com>
-Date: Thu, 14 Jan 2016 20:22:59 +0300
-Subject: [PATCH 09/25] arm64: ensure the kernel is compiled for LP64
+Date: Tue, 24 May 2016 03:04:38 +0300
+Subject: [PATCH 09/24] arm64: ensure the kernel is compiled for LP64
 
 The kernel needs to be compiled as a LP64 binary for ARM64, even when
 using a compiler that defaults to code-generation for the ILP32 ABI.
@@ -42,5 +42,5 @@ index dd09d43..060329d 100644
  
  CHECKFLAGS	+= -D__aarch64__
 -- 
-2.1.4
+1.9.1
 

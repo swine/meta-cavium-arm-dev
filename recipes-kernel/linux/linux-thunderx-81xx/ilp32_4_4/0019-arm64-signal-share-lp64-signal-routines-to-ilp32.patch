@@ -1,7 +1,7 @@
-From eb7ae09f22f7d579bb9869e77d7fa8f3cf170820 Mon Sep 17 00:00:00 2001
+From 4dae2734132f2e47479753ffaf6222076c2bfa47 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Thu, 14 Jan 2016 20:23:11 +0300
-Subject: [PATCH 20/25] arm64: signal: share lp64 signal routines to ilp32
+Date: Tue, 24 May 2016 03:04:48 +0300
+Subject: [PATCH 19/24] arm64: signal: share lp64 signal routines to ilp32
 
 After that, it will be possible to reuse it in ilp32.
 
@@ -235,5 +235,5 @@ index 65baaef..b22e02a 100644
  	}
  
 -- 
-2.1.4
+1.9.1
 

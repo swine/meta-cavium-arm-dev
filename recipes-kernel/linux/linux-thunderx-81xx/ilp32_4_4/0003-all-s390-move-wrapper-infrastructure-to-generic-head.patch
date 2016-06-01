@@ -1,7 +1,7 @@
-From 50535b68e4315adbcdfaaa3b008013e8f9fdf10a Mon Sep 17 00:00:00 2001
+From 6853b31eed18d9ff7c5e1843be31dc587dfefc30 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Sun, 22 May 2016 09:32:53 -0700
-Subject: [PATCH 03/25] all: s390: move wrapper infrastructure to generic
+Date: Tue, 24 May 2016 03:04:32 +0300
+Subject: [PATCH 03/24] all: s390: move wrapper infrastructure to generic
  headers
 
 This patch moves required calls to generic files to let other arches use
@@ -129,7 +129,7 @@ index fac4eed..527f75d 100644
  COMPAT_SYSCALL_WRAP2(link, const char __user *, oldname, const char __user *, newname);
  COMPAT_SYSCALL_WRAP1(unlink, const char __user *, pathname);
 diff --git a/include/linux/compat.h b/include/linux/compat.h
-index a76c917..f14347e 100644
+index a76c917..72ef245 100644
 --- a/include/linux/compat.h
 +++ b/include/linux/compat.h
 @@ -28,6 +28,10 @@
@@ -147,7 +147,7 @@ index a76c917..f14347e 100644
  #define is_compat_task() (0)
  
  #endif /* CONFIG_COMPAT */
-+
++ 
 +#ifdef CONFIG_COMPAT_WRAPPER
 +
 +#define COMPAT_SYSCALL_WRAP1(name, ...) COMPAT_SYSCALL_WRAPx(1, _##name, __VA_ARGS__)
@@ -192,7 +192,7 @@ index a76c917..f14347e 100644
 +{											\
 +	return sys##name(__MAP(x,__SC_COMPAT_CAST,__VA_ARGS__));			\
 +}
-+#endif
++#endif /* COMPAT_SYSCALL_WRAPx */
 +
 +#endif /* CONFIG_COMPAT_WRAPPER */
 +
@@ -347,5 +347,5 @@ index 1324b02..a8380ad 100644
  __SC_COMP(__NR_io_setup, sys_io_setup, compat_sys_io_setup)
  #define __NR_io_destroy 1
 -- 
-2.1.4
+1.9.1
 

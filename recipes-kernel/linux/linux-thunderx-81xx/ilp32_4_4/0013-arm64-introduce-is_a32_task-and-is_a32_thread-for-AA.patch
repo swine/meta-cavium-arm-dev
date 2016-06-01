@@ -1,7 +1,7 @@
-From 7ef61eea040cf393ee94fc5bf7c416ec7ca87473 Mon Sep 17 00:00:00 2001
+From f0310d3cbe1f47012d5258f75eb3eee10f7a7e1b Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Mon, 23 May 2016 13:49:59 -0700
-Subject: [PATCH 15/25] arm64: introduce is_a32_task and is_a32_thread (for
+Date: Tue, 24 May 2016 03:04:42 +0300
+Subject: [PATCH 13/24] arm64: introduce is_a32_task and is_a32_thread (for
  AArch32 compat)
 
 Based on patch of Andrew Pinski.
@@ -15,11 +15,11 @@ Some files include both <linux/compat.h> and <asm/compat.h>,
 and this is wrong because <linux/compat.h> has <asm/compat.h> already
 included. It was fixed too.
 
-Reviewed-by: David Daney <ddaney@caviumnetworks.com>
+Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 Signed-off-by: Philipp Tomsich <philipp.tomsich@theobroma-systems.com>
 Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems.com>
-Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 Signed-off-by: Andrew Pinski <Andrew.Pinski@caviumnetworks.com>
+Reviewed-by: David Daney <ddaney@caviumnetworks.com>
 ---
  arch/arm64/include/asm/compat.h      | 19 ++----------
  arch/arm64/include/asm/elf.h         | 10 +++----
@@ -183,7 +183,7 @@ index 0000000..6139b5a
 +#endif /* !__ASSEMBLY__ */
 +#endif /* __ASM_IS_COMPAT_H */
 diff --git a/arch/arm64/include/asm/memory.h b/arch/arm64/include/asm/memory.h
-index 853953c..f7aaab0 100644
+index 853953c..5ec1b74 100644
 --- a/arch/arm64/include/asm/memory.h
 +++ b/arch/arm64/include/asm/memory.h
 @@ -25,6 +25,7 @@
@@ -199,7 +199,7 @@ index 853953c..f7aaab0 100644
  #ifdef CONFIG_COMPAT
  #define TASK_SIZE_32		UL(0x100000000)
 -#define TASK_SIZE		(test_thread_flag(TIF_32BIT) ? \
-+#define TASK_SIZE		(is_compat_task() ? \
++#define TASK_SIZE		(is_compat_task() ?		\
  				TASK_SIZE_32 : TASK_SIZE_64)
  #define TASK_SIZE_OF(tsk)	(test_tsk_thread_flag(tsk, TIF_32BIT) ? \
  				TASK_SIZE_32 : TASK_SIZE_64)
@@ -361,7 +361,7 @@ index f75b540..44c8328 100644
  
  	asm(
 diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index b51ff12..9646558 100644
+index 16ed9fd..39d333c 100644
 --- a/arch/arm64/kernel/ptrace.c
 +++ b/arch/arm64/kernel/ptrace.c
 @@ -38,7 +38,6 @@
@@ -446,5 +446,5 @@ index b50fced..4115c44 100644
  		if (ret != -ENOSYS)
  			return ret;
 -- 
-2.1.4
+1.9.1
 

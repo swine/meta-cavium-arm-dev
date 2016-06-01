@@ -1,13 +1,14 @@
-From 73b100b3f6892eb6e2937f24f0289f0f5c9d0464 Mon Sep 17 00:00:00 2001
-From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Thu, 14 Jan 2016 20:23:14 +0300
-Subject: [PATCH 22/25] arm64: ilp32: introduce ilp32-specific handlers for
- sigframe
+From 917ae737f99d75aaaa08a81f24ba32c183774f77 Mon Sep 17 00:00:00 2001
+From: Andrew Pinski <apinski@cavium.com>
+Date: Tue, 24 May 2016 03:04:50 +0300
+Subject: [PATCH 21/24] arm64: ilp32: introduce ilp32-specific handlers for
+ sigframe and ucontext
 
 ILP32 uses AARCH32 compat structures and syscall handlers for signals.
-But ILP32 struct rt_sigframe differs from both LP64 and AARCH32. So some
-specific mechanism is needed to take care of it.
+But ILP32 struct rt_sigframe  and ucontext differs from both LP64 and
+AARCH32. So some specific mechanism is needed to take care of it.
 
+Signed-off-by: Andrew Pinski <Andrew.Pinski@caviumnetworks.com>
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
  arch/arm64/include/asm/signal_ilp32.h |  34 ++++++
@@ -324,12 +325,12 @@ index 0000000..841e8f8
 +}
 +
 diff --git a/arch/arm64/kernel/sys_ilp32.c b/arch/arm64/kernel/sys_ilp32.c
-index 0996d8e..1458ad7 100644
+index d4cd2a9..a31d538 100644
 --- a/arch/arm64/kernel/sys_ilp32.c
 +++ b/arch/arm64/kernel/sys_ilp32.c
-@@ -43,6 +43,9 @@
- #define sys_llseek                     sys_lseek
- #define sys_mmap2		       sys_mmap
+@@ -65,6 +65,9 @@ static unsigned long compat_sys_pwrite64(unsigned int fd,
+ 	return sys_pwrite64(fd, (char *) ubuf, count, offset);
+ }
  
 +asmlinkage long ilp32_sys_rt_sigreturn_wrapper(void);
 +#define compat_sys_rt_sigreturn        ilp32_sys_rt_sigreturn_wrapper
@@ -338,5 +339,5 @@ index 0996d8e..1458ad7 100644
  
  #undef __SYSCALL
 -- 
-2.1.4
+1.9.1
 

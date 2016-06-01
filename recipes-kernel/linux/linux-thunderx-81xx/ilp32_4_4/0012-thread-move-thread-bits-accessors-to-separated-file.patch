@@ -1,14 +1,14 @@
-From 26c4d9fa34ae1194380318e2629f48c5236ac772 Mon Sep 17 00:00:00 2001
+From 424bca6aab79eea983122b934b2c4165cc09a3d0 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Thu, 14 Jan 2016 20:23:04 +0300
-Subject: [PATCH 14/25] thread: move thread bits accessors to separated file
+Date: Tue, 24 May 2016 03:04:41 +0300
+Subject: [PATCH 12/24] thread: move thread bits accessors to separated file
 
 They may be accessed from low-level code, so isolating is a measure to
 avoid circular dependencies in header files.
 
 The exact reason for circular dependency is WARN_ON() macro added by Al
-Viro in patch "set_restore_sigmask() is never called without SIGPENDING
-(and never should be)" [edd63a27]
+Viro in patch [edd63a27] "set_restore_sigmask() is never called without
+SIGPENDING (and never should be)"
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
@@ -141,5 +141,5 @@ index ff307b5..c905fec 100644
  
  #if defined TIF_RESTORE_SIGMASK && !defined HAVE_SET_RESTORE_SIGMASK
 -- 
-2.1.4
+1.9.1
 

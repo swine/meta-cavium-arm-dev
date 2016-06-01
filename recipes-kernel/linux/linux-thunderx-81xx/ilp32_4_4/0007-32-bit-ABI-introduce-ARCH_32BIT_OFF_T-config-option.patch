@@ -1,7 +1,7 @@
-From c0dde8142097c438ba57d8e29b6d376f02d74020 Mon Sep 17 00:00:00 2001
+From 555e216fb0e7d3caf30304560c58141287dfaa05 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Tue, 29 Dec 2015 12:26:35 +0300
-Subject: [PATCH 07/25] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
+Date: Tue, 24 May 2016 03:04:36 +0300
+Subject: [PATCH 07/24] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
 
 All new 32-bit architectures should have 64-bit off_t type, but existing
 architectures has 32-bit ones.
@@ -65,17 +65,17 @@ index ab7692e..641c1cb 100644
  	bool
  	help
 diff --git a/arch/arc/Kconfig b/arch/arc/Kconfig
-index 6312f60..90e16ce 100644
+index 6312f60..570dc39 100644
 --- a/arch/arc/Kconfig
 +++ b/arch/arc/Kconfig
-@@ -38,6 +38,7 @@ config ARC
- 	select OF_EARLY_FLATTREE
- 	select PERF_USE_VMALLOC
- 	select HAVE_DEBUG_STACKOVERFLOW
-+	select ARCH_32BIT_OFF_T
- 
- config TRACE_IRQFLAGS_SUPPORT
+@@ -9,6 +9,7 @@
+ config ARC
  	def_bool y
+ 	select ARCH_SUPPORTS_ATOMIC_RMW if ARC_HAS_LLSC
++	select ARCH_32BIT_OFF_T
+ 	select BUILDTIME_EXTABLE_SORT
+ 	select COMMON_CLK
+ 	select CLONE_BACKWARDS
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
 index ac1bd29..d5e6a08 100644
 --- a/arch/arm/Kconfig
@@ -194,17 +194,17 @@ index 0bce820..4b293e5 100644
  	select ARCH_MIGHT_HAVE_PC_PARPORT
  	select ARCH_WANT_IPC_PARSE_VERSION
 diff --git a/arch/mips/Kconfig b/arch/mips/Kconfig
-index db45961..41f79d6 100644
+index db45961..0ef9d4c 100644
 --- a/arch/mips/Kconfig
 +++ b/arch/mips/Kconfig
-@@ -2,6 +2,7 @@ config MIPS
+@@ -1,6 +1,7 @@
+ config MIPS
  	bool
  	default y
- 	select ARCH_SUPPORTS_UPROBES
 +	select ARCH_32BIT_OFF_T if !64BIT
+ 	select ARCH_SUPPORTS_UPROBES
  	select ARCH_MIGHT_HAVE_PC_PARPORT
  	select ARCH_MIGHT_HAVE_PC_SERIO
- 	select ARCH_USE_CMPXCHG_LOCKREF if 64BIT
 diff --git a/arch/mn10300/Kconfig b/arch/mn10300/Kconfig
 index 78ae555..edf7372 100644
 --- a/arch/mn10300/Kconfig
@@ -311,16 +311,17 @@ index 8ec7a45..522cf45 100644
  	select USE_PMC if PERF_EVENTS
  	select HAVE_DMA_ATTRS
 diff --git a/arch/unicore32/Kconfig b/arch/unicore32/Kconfig
-index c9faddc..1a8c3c0 100644
+index c9faddc..b813ff8 100644
 --- a/arch/unicore32/Kconfig
 +++ b/arch/unicore32/Kconfig
-@@ -1,5 +1,6 @@
+@@ -1,6 +1,7 @@
  config UNICORE32
  	def_bool y
-+	select ARCH_32BIT_OFF_T
  	select ARCH_MIGHT_HAVE_PC_PARPORT
++	select ARCH_32BIT_OFF_T
  	select ARCH_MIGHT_HAVE_PC_SERIO
  	select HAVE_MEMBLOCK
+ 	select HAVE_GENERIC_DMA_COHERENT
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
 index 03ef954..47c841d 100644
 --- a/arch/x86/Kconfig
@@ -371,5 +372,5 @@ index 76ce329..46960a1 100644
  
  #if BITS_PER_LONG == 32
 -- 
-2.1.4
+1.9.1
 

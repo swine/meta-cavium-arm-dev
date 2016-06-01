@@ -1,7 +1,7 @@
-From c3f7d0173f3c37f80d52b69a9eee47819e23c331 Mon Sep 17 00:00:00 2001
+From d9fc9b0b2c9e5c0588e7f2ddd1577bc3fb665c5b Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Mon, 23 May 2016 18:32:19 -0700
-Subject: [PATCH 18/25] arm64: ilp32: introduce binfmt_ilp32.c
+Date: Tue, 24 May 2016 03:04:45 +0300
+Subject: [PATCH 16/24] arm64: ilp32: introduce binfmt_ilp32.c
 
 to handle ILP32 binaries
 
@@ -122,5 +122,5 @@ index 0000000..a934fd4
 +
 +#include "../../../fs/binfmt_elf.c"
 -- 
-2.1.4
+1.9.1
 

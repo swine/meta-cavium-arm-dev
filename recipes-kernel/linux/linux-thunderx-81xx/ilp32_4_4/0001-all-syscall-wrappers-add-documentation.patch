@@ -1,7 +1,7 @@
-From 178216512622abb861ecfd24c3b5de406c9b421a Mon Sep 17 00:00:00 2001
+From c7d4fd3d84054559f8de77b8a98caf3c51260060 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Wed, 24 Feb 2016 20:34:40 +0300
-Subject: [PATCH 01/25] all: syscall wrappers: add documentation
+Date: Tue, 24 May 2016 03:04:30 +0300
+Subject: [PATCH 01/24] all: syscall wrappers: add documentation
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
@@ -52,5 +52,5 @@ index cc2d4ac..d02a6bd 100644
  --------------------------------
  
 -- 
-2.1.4
+1.9.1
 
