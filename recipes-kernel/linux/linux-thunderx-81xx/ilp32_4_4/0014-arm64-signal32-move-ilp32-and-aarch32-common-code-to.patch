@@ -1,25 +1,40 @@
-From 1d78ddc37a0bd9d29d9e67d3e563c8fe5e1c044f Mon Sep 17 00:00:00 2001
+From 766fa6b77bccf175c04cce4a815961ceda4d195b Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:49 +0300
-Subject: [PATCH 20/24] arm64: signal32: move ilp32 and aarch32 common code to
+Subject: [PATCH 14/18] arm64: signal32: move ilp32 and aarch32 common code to
  separated file
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
- arch/arm64/include/asm/signal32_common.h |  25 +++++++
- arch/arm64/kernel/Makefile               |   1 +
- arch/arm64/kernel/signal32.c             |  84 ----------------------
- arch/arm64/kernel/signal32_common.c      | 115 +++++++++++++++++++++++++++++++
- 4 files changed, 141 insertions(+), 84 deletions(-)
+ arch/arm64/include/asm/signal32.h        |   3 +
+ arch/arm64/include/asm/signal32_common.h |  28 +++++++
+ arch/arm64/kernel/Makefile               |   2 +-
+ arch/arm64/kernel/signal32.c             | 107 ------------------------
+ arch/arm64/kernel/signal32_common.c      | 136 +++++++++++++++++++++++++++++++
+ 5 files changed, 168 insertions(+), 108 deletions(-)
  create mode 100644 arch/arm64/include/asm/signal32_common.h
  create mode 100644 arch/arm64/kernel/signal32_common.c
 
+diff --git a/arch/arm64/include/asm/signal32.h b/arch/arm64/include/asm/signal32.h
+index e68fcce..1c4ede7 100644
+--- a/arch/arm64/include/asm/signal32.h
++++ b/arch/arm64/include/asm/signal32.h
+@@ -13,6 +13,9 @@
+  * You should have received a copy of the GNU General Public License
+  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  */
++
++#include <asm/signal32_common.h>
++
+ #ifndef __ASM_SIGNAL32_H
+ #define __ASM_SIGNAL32_H
+ 
 diff --git a/arch/arm64/include/asm/signal32_common.h b/arch/arm64/include/asm/signal32_common.h
 new file mode 100644
-index 0000000..b4f2099
+index 0000000..e3e2d01
 --- /dev/null
 +++ b/arch/arm64/include/asm/signal32_common.h
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,28 @@
 +/*
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -41,30 +56,56 @@ index 0000000..b4f2099
 +int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from);
 +int copy_siginfo_from_user32(siginfo_t *to, compat_siginfo_t __user *from);
 +
++int put_sigset_t(compat_sigset_t __user *uset, sigset_t *set);
++int get_sigset_t(sigset_t *set, const compat_sigset_t __user *uset);
++
 +#endif /* CONFIG_COMPAT*/
 +
 +#endif /* __ASM_SIGNAL32_COMMON_H */
 +
 diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
-index b0adab7..4c1db47 100644
+index 228249c..55f2288 100644
 --- a/arch/arm64/kernel/Makefile
 +++ b/arch/arm64/kernel/Makefile
-@@ -29,6 +29,7 @@ arm64-obj-$(CONFIG_AARCH32_EL0)		+= sys32.o kuser32.o signal32.o 	\
- 					   sys_compat.o entry32.o		\
- 					   ../../arm/kernel/opcodes.o binfmt_elf32.o
+@@ -30,7 +30,7 @@ arm64-obj-$(CONFIG_AARCH32_EL0)		+= sys32.o kuser32.o signal32.o 	\
+ 					   sys_compat.o entry32.o binfmt_elf32.o \
+ 					   ../../arm/kernel/opcodes.o
  arm64-obj-$(CONFIG_ARM64_ILP32)		+= binfmt_ilp32.o sys_ilp32.o
-+arm64-obj-$(CONFIG_COMPAT)		+= signal32_common.o
+-arm64-obj-$(CONFIG_COMPAT)		+= entry32_common.o
++arm64-obj-$(CONFIG_COMPAT)		+= entry32_common.o signal32_common.o
  arm64-obj-$(CONFIG_FUNCTION_TRACER)	+= ftrace.o entry-ftrace.o
  arm64-obj-$(CONFIG_MODULES)		+= arm64ksyms.o module.o
  arm64-obj-$(CONFIG_PERF_EVENTS)		+= perf_regs.o perf_callchain.o
 diff --git a/arch/arm64/kernel/signal32.c b/arch/arm64/kernel/signal32.c
-index 71ef6dc..3472a1a 100644
+index 71ef6dc..4593cfb 100644
 --- a/arch/arm64/kernel/signal32.c
 +++ b/arch/arm64/kernel/signal32.c
-@@ -125,90 +125,6 @@ static inline int get_sigset_t(sigset_t *set,
- 	return 0;
- }
+@@ -103,113 +103,6 @@ struct compat_rt_sigframe {
  
+ #define _BLOCKABLE (~(sigmask(SIGKILL) | sigmask(SIGSTOP)))
+ 
+-static inline int put_sigset_t(compat_sigset_t __user *uset, sigset_t *set)
+-{
+-	compat_sigset_t	cset;
+-
+-	cset.sig[0] = set->sig[0] & 0xffffffffull;
+-	cset.sig[1] = set->sig[0] >> 32;
+-
+-	return copy_to_user(uset, &cset, sizeof(*uset));
+-}
+-
+-static inline int get_sigset_t(sigset_t *set,
+-			       const compat_sigset_t __user *uset)
+-{
+-	compat_sigset_t s32;
+-
+-	if (copy_from_user(&s32, uset, sizeof(*uset)))
+-		return -EFAULT;
+-
+-	set->sig[0] = s32.sig[0] | (((long)s32.sig[1]) << 32);
+-	return 0;
+-}
+-
 -int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from)
 -{
 -	int err;
@@ -149,15 +190,16 @@ index 71ef6dc..3472a1a 100644
 -
 -	return 0;
 -}
- 
+-
  /*
   * VFP save/restore code.
+  *
 diff --git a/arch/arm64/kernel/signal32_common.c b/arch/arm64/kernel/signal32_common.c
 new file mode 100644
-index 0000000..8fbb609
+index 0000000..4a45aa6
 --- /dev/null
 +++ b/arch/arm64/kernel/signal32_common.c
-@@ -0,0 +1,115 @@
+@@ -0,0 +1,136 @@
 +/*
 + * Based on arch/arm/kernel/signal.c
 + *
@@ -187,6 +229,27 @@ index 0000000..8fbb609
 +#include <asm/signal32_common.h>
 +#include <asm/uaccess.h>
 +#include <asm/unistd.h>
++
++int put_sigset_t(compat_sigset_t __user *uset, sigset_t *set)
++{
++	compat_sigset_t	cset;
++
++	cset.sig[0] = set->sig[0] & 0xffffffffull;
++	cset.sig[1] = set->sig[0] >> 32;
++
++	return copy_to_user(uset, &cset, sizeof(*uset));
++}
++
++int get_sigset_t(sigset_t *set, const compat_sigset_t __user *uset)
++{
++	compat_sigset_t s32;
++
++	if (copy_from_user(&s32, uset, sizeof(*uset)))
++		return -EFAULT;
++
++	set->sig[0] = s32.sig[0] | (((long)s32.sig[1]) << 32);
++	return 0;
++}
 +
 +int copy_siginfo_to_user32(compat_siginfo_t __user *to, const siginfo_t *from)
 +{

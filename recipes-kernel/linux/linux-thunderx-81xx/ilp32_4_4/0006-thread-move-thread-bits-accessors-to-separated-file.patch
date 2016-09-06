@@ -1,7 +1,7 @@
-From 424bca6aab79eea983122b934b2c4165cc09a3d0 Mon Sep 17 00:00:00 2001
+From 5c440e865835298a9bcf78a1d3e047bf4e683e8c Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:41 +0300
-Subject: [PATCH 12/24] thread: move thread bits accessors to separated file
+Subject: [PATCH 06/18] thread: move thread bits accessors to separated file
 
 They may be accessed from low-level code, so isolating is a measure to
 avoid circular dependencies in header files.

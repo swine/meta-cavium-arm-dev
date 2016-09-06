@@ -1,7 +1,7 @@
-From dfa0f95bd124a0a32c4dc92a5fa7b86a217756ad Mon Sep 17 00:00:00 2001
+From 9f599c8a7cdc01da50fbf2a9fa5a50bd35391535 Mon Sep 17 00:00:00 2001
 From: Andrew Pinski <apinski@cavium.com>
 Date: Tue, 24 May 2016 03:04:40 +0300
-Subject: [PATCH 11/24] arm64:uapi: set __BITS_PER_LONG correctly for ILP32 and
+Subject: [PATCH 05/18] arm64:uapi: set __BITS_PER_LONG correctly for ILP32 and
  LP64
 
 Define __BITS_PER_LONG depending on the ABI used (i.e. check whether

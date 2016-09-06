@@ -1,7 +1,7 @@
-From 555e216fb0e7d3caf30304560c58141287dfaa05 Mon Sep 17 00:00:00 2001
+From 9fab01643baaa88139335db2ee0e6d31888a88a2 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:36 +0300
-Subject: [PATCH 07/24] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
+Subject: [PATCH 01/18] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
 
 All new 32-bit architectures should have 64-bit off_t type, but existing
 architectures has 32-bit ones.
@@ -13,6 +13,12 @@ ARCH_32BIT_OFF_T to be disabled for non-64 bit architectures. All existing
 New option affects force_o_largefile() behaviour. Namely, if off_t is
 64-bits long, we have no reason to reject user to open big files.
 
+For syscalls sys_openat() and sys_open_by_handle_at() force_o_largefile()
+is called, to set O_LARGEFILE flag, and this is the only difference
+comparing to compat versions. So for now we can drop compat version of
+that syscalls in standard unistd, as ARCH_32BIT_OFF_T controls the
+behaviour explicitly.
+
 Note that even if architectures has only 64-bit off_t in the kernel
 (arc, c6x, h8300, hexagon, metag, nios2, openrisc, tile32 and unicore32),
 a libc may use 32-bit off_t, and therefore want to limit the file size
@@ -20,37 +26,38 @@ to 4GB unless specified differently in the open flags.
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
- arch/Kconfig            | 4 ++++
- arch/arc/Kconfig        | 1 +
- arch/arm/Kconfig        | 1 +
- arch/blackfin/Kconfig   | 1 +
- arch/cris/Kconfig       | 1 +
- arch/frv/Kconfig        | 1 +
- arch/h8300/Kconfig      | 1 +
- arch/hexagon/Kconfig    | 1 +
- arch/m32r/Kconfig       | 1 +
- arch/m68k/Kconfig       | 1 +
- arch/metag/Kconfig      | 1 +
- arch/microblaze/Kconfig | 1 +
- arch/mips/Kconfig       | 1 +
- arch/mn10300/Kconfig    | 1 +
- arch/nios2/Kconfig      | 1 +
- arch/openrisc/Kconfig   | 1 +
- arch/parisc/Kconfig     | 1 +
- arch/powerpc/Kconfig    | 1 +
- arch/score/Kconfig      | 1 +
- arch/sh/Kconfig         | 1 +
- arch/sparc/Kconfig      | 1 +
- arch/tile/Kconfig       | 1 +
- arch/unicore32/Kconfig  | 1 +
- arch/x86/Kconfig        | 1 +
- arch/x86/um/Kconfig     | 1 +
- arch/xtensa/Kconfig     | 1 +
- include/linux/fcntl.h   | 2 +-
- 27 files changed, 30 insertions(+), 1 deletion(-)
+ arch/Kconfig                      | 4 ++++
+ arch/arc/Kconfig                  | 1 +
+ arch/arm/Kconfig                  | 1 +
+ arch/blackfin/Kconfig             | 1 +
+ arch/cris/Kconfig                 | 1 +
+ arch/frv/Kconfig                  | 1 +
+ arch/h8300/Kconfig                | 1 +
+ arch/hexagon/Kconfig              | 1 +
+ arch/m32r/Kconfig                 | 1 +
+ arch/m68k/Kconfig                 | 1 +
+ arch/metag/Kconfig                | 1 +
+ arch/microblaze/Kconfig           | 1 +
+ arch/mips/Kconfig                 | 1 +
+ arch/mn10300/Kconfig              | 1 +
+ arch/nios2/Kconfig                | 1 +
+ arch/openrisc/Kconfig             | 1 +
+ arch/parisc/Kconfig               | 1 +
+ arch/powerpc/Kconfig              | 1 +
+ arch/score/Kconfig                | 1 +
+ arch/sh/Kconfig                   | 1 +
+ arch/sparc/Kconfig                | 1 +
+ arch/tile/Kconfig                 | 1 +
+ arch/unicore32/Kconfig            | 1 +
+ arch/x86/Kconfig                  | 1 +
+ arch/x86/um/Kconfig               | 1 +
+ arch/xtensa/Kconfig               | 1 +
+ include/linux/fcntl.h             | 2 +-
+ include/uapi/asm-generic/unistd.h | 5 ++---
+ 28 files changed, 32 insertions(+), 4 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index ab7692e..641c1cb 100644
+index 4e949e5..b356bb6 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -233,6 +233,10 @@ config ARCH_THREAD_INFO_ALLOCATOR
@@ -206,16 +213,17 @@ index db45961..0ef9d4c 100644
  	select ARCH_MIGHT_HAVE_PC_PARPORT
  	select ARCH_MIGHT_HAVE_PC_SERIO
 diff --git a/arch/mn10300/Kconfig b/arch/mn10300/Kconfig
-index 78ae555..edf7372 100644
+index 78ae555..8fb7ca5 100644
 --- a/arch/mn10300/Kconfig
 +++ b/arch/mn10300/Kconfig
-@@ -1,5 +1,6 @@
- config MN10300
- 	def_bool y
-+	select ARCH_32BIT_OFF_T
+@@ -3,6 +3,7 @@ config MN10300
  	select HAVE_OPROFILE
  	select HAVE_UID16
  	select GENERIC_IRQ_SHOW
++	select ARCH_32BIT_OFF_T
+ 	select ARCH_WANT_IPC_PARSE_VERSION
+ 	select HAVE_ARCH_TRACEHOOK
+ 	select HAVE_ARCH_KGDB
 diff --git a/arch/nios2/Kconfig b/arch/nios2/Kconfig
 index 4375554..a38fc38 100644
 --- a/arch/nios2/Kconfig
@@ -311,19 +319,18 @@ index 8ec7a45..522cf45 100644
  	select USE_PMC if PERF_EVENTS
  	select HAVE_DMA_ATTRS
 diff --git a/arch/unicore32/Kconfig b/arch/unicore32/Kconfig
-index c9faddc..b813ff8 100644
+index c9faddc..1a8c3c0 100644
 --- a/arch/unicore32/Kconfig
 +++ b/arch/unicore32/Kconfig
-@@ -1,6 +1,7 @@
+@@ -1,5 +1,6 @@
  config UNICORE32
  	def_bool y
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
 +	select ARCH_32BIT_OFF_T
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
  	select ARCH_MIGHT_HAVE_PC_SERIO
  	select HAVE_MEMBLOCK
- 	select HAVE_GENERIC_DMA_COHERENT
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 03ef954..47c841d 100644
+index fd4932c..003ad62 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
 @@ -20,6 +20,7 @@ config X86
@@ -371,6 +378,29 @@ index 76ce329..46960a1 100644
  #endif
  
  #if BITS_PER_LONG == 32
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 1324b02..07761e5 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -175,7 +175,7 @@ __SYSCALL(__NR_fchownat, sys_fchownat)
+ #define __NR_fchown 55
+ __SYSCALL(__NR_fchown, sys_fchown)
+ #define __NR_openat 56
+-__SC_COMP(__NR_openat, sys_openat, compat_sys_openat)
++__SYSCALL(__NR_openat, sys_openat)
+ #define __NR_close 57
+ __SYSCALL(__NR_close, sys_close)
+ #define __NR_vhangup 58
+@@ -673,8 +673,7 @@ __SYSCALL(__NR_fanotify_mark, sys_fanotify_mark)
+ #define __NR_name_to_handle_at         264
+ __SYSCALL(__NR_name_to_handle_at, sys_name_to_handle_at)
+ #define __NR_open_by_handle_at         265
+-__SC_COMP(__NR_open_by_handle_at, sys_open_by_handle_at, \
+-	  compat_sys_open_by_handle_at)
++__SYSCALL(__NR_open_by_handle_at, sys_open_by_handle_at)
+ #define __NR_clock_adjtime 266
+ __SC_COMP(__NR_clock_adjtime, sys_clock_adjtime, compat_sys_clock_adjtime)
+ #define __NR_syncfs 267
 -- 
 1.9.1
 

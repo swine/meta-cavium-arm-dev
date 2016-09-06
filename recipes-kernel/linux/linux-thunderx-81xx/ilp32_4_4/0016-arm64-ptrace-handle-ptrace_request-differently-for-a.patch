@@ -1,7 +1,7 @@
-From 315e986a5ad4db96192209b99d2979b24dada966 Mon Sep 17 00:00:00 2001
+From 187f1c30bd21eb534d38d789d718360c97623e30 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:46 +0300
-Subject: [PATCH 17/24] arm64: ptrace: handle ptrace_request differently for
+Subject: [PATCH 16/18] arm64: ptrace: handle ptrace_request differently for
  aarch32 and ilp32
 
 Here new aarch32 ptrace syscall handler is introsuced to avoid run-time
@@ -10,11 +10,11 @@ detection of the task type.
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
  arch/arm64/include/asm/unistd32.h |  2 +-
- arch/arm64/kernel/ptrace.c        | 50 ++++++++++++++++++++++++++++++++++++++-
+ arch/arm64/kernel/ptrace.c        | 91 ++++++++++++++++++++++++++++++++++++++-
  arch/arm64/kernel/sys32.c         |  1 +
- include/linux/ptrace.h            |  6 +++++
- kernel/ptrace.c                   | 10 ++++----
- 5 files changed, 62 insertions(+), 7 deletions(-)
+ include/linux/ptrace.h            |  6 +++
+ kernel/ptrace.c                   | 10 ++---
+ 5 files changed, 103 insertions(+), 7 deletions(-)
 
 diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
 index 5b925b7..f57bbe3 100644
@@ -30,7 +30,7 @@ index 5b925b7..f57bbe3 100644
  __SYSCALL(27, sys_ni_syscall)
  			/* 28 was sys_fstat */
 diff --git a/arch/arm64/kernel/ptrace.c b/arch/arm64/kernel/ptrace.c
-index 39d333c..6083919 100644
+index 39d333c..b4a4a1e 100644
 --- a/arch/arm64/kernel/ptrace.c
 +++ b/arch/arm64/kernel/ptrace.c
 @@ -29,6 +29,7 @@
@@ -41,7 +41,15 @@ index 39d333c..6083919 100644
  #include <linux/init.h>
  #include <linux/signal.h>
  #include <linux/uaccess.h>
-@@ -1114,7 +1115,7 @@ static int compat_ptrace_sethbpregs(struct task_struct *tsk, compat_long_t num,
+@@ -40,6 +41,7 @@
+ 
+ #include <asm/debug-monitors.h>
+ #include <asm/pgtable.h>
++#include <asm/signal32_common.h>
+ #include <asm/syscall.h>
+ #include <asm/traps.h>
+ #include <asm/system_misc.h>
+@@ -1114,7 +1116,7 @@ static int compat_ptrace_sethbpregs(struct task_struct *tsk, compat_long_t num,
  }
  #endif	/* CONFIG_HAVE_HW_BREAKPOINT */
  
@@ -50,7 +58,7 @@ index 39d333c..6083919 100644
  			compat_ulong_t caddr, compat_ulong_t cdata)
  {
  	unsigned long addr = caddr;
-@@ -1191,8 +1192,55 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
+@@ -1191,8 +1193,95 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
  
  	return ret;
  }
@@ -93,15 +101,55 @@ index 39d333c..6083919 100644
 +
  #endif /* CONFIG_AARCH32_EL0 */
  
-+#ifdef CONFIG_COMPAT
++#ifdef CONFIG_ARM64_ILP32
 +
 +long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 +			compat_ulong_t caddr, compat_ulong_t cdata)
 +{
-+	return compat_ptrace_request(child, request, caddr, cdata);
++	sigset_t new_set;
++
++	switch (request) {
++	case PTRACE_GETSIGMASK:
++		if (caddr != sizeof(compat_sigset_t))
++			return -EINVAL;
++
++		return put_sigset_t((compat_sigset_t __user *) (u64) cdata,
++					&child->blocked);
++
++	case PTRACE_SETSIGMASK:
++		if (caddr != sizeof(compat_sigset_t))
++			return -EINVAL;
++
++		if (get_sigset_t(&new_set, (compat_sigset_t __user *) (u64) cdata))
++			return -EFAULT;
++
++		sigdelsetmask(&new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
++
++		/*
++		 * Every thread does recalc_sigpending() after resume, so
++		 * retarget_shared_pending() and recalc_sigpending() are not
++		 * called here.
++		 */
++		spin_lock_irq(&child->sighand->siglock);
++		child->blocked = new_set;
++		spin_unlock_irq(&child->sighand->siglock);
++
++		return 0;
++
++	default:
++		return compat_ptrace_request(child, request, caddr, cdata);
++	}
 +}
 +
-+#endif /* CONFIG_COMPAT */
++#elif defined (CONFIG_COMPAT)
++
++long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
++		compat_ulong_t caddr, compat_ulong_t cdata)
++{
++	return 0;
++}
++
++#endif
 +
  const struct user_regset_view *task_user_regset_view(struct task_struct *task)
  {
