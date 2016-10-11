@@ -1,7 +1,7 @@
 From 8190fa17104b7f56d6318c0918657b6eb33a9c9b Mon Sep 17 00:00:00 2001
 From: Andrew Pinski <apinski@cavium.com>
 Date: Mon, 25 Jan 2016 16:08:03 -0800
-Subject: [PATCH 1/4] 2016-01-25  Andrew Pinski  <apinski@cavium.com>
+Subject: [PATCH 1/7] 2016-01-25  Andrew Pinski  <apinski@cavium.com>
 
         * aarch64-linux-nat.c (AARCH64_DEBUG_ARCH_V81): New define.
         (aarch64_linux_get_debug_reg_capacity): Allow for AARCH64_DEBUG_ARCH_V81
@@ -78,5 +78,5 @@ index 6b84042..c29c7c8 100644
        aarch64_num_bp_regs = AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info);
        if (aarch64_num_bp_regs > AARCH64_HBP_MAX_NUM)
 -- 
-1.9.1
+2.5.0
 

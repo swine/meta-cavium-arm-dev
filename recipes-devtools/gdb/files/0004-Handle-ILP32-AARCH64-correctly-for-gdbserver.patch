@@ -1,7 +1,7 @@
 From 3c8d8e1e49ca5ef709f1aa24f461a69c270eabc0 Mon Sep 17 00:00:00 2001
 From: Andrew Pinski <apinski@cavium.com>
 Date: Tue, 30 Aug 2016 19:16:25 -0700
-Subject: [PATCH 4/4] Handle ILP32 AARCH64 correctly for gdbserver
+Subject: [PATCH 4/7] Handle ILP32 AARCH64 correctly for gdbserver
 
 In gdbserver, we need to send over 64bit registers
 for pc/sp but the types need to be 64bit also.
@@ -674,5 +674,5 @@ index 0000000..e838569
 +0:
 +32:xpsr
 -- 
-1.9.1
+2.5.0
 
