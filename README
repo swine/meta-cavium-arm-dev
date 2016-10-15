@@ -1,0 +1,13 @@
+Changes in local.conf for running gdbserver 7.9.1
+--------------------------------------------------
+PREFERRED_PROVDER_gdb = "meta"
+PREFERRED_VERSION_gdb = "7.9.1"
+
+Tested with poky jethro commit id:
+
+commit 37eb21b2b1d5977a028a448e52551607fae99bf7
+Author: Maxin B. John <maxin.john@intel.com>
+Date:   Mon Aug 22 11:39:33 2016 +0300
+
+    curl: security fix for CVE-2016-5421
+
