@@ -3,7 +3,7 @@ PROVIDES = "virtual/bootloader"
 DEPENDS_append += "libgcc"
 LICENSE = "GPL"
 
-S = "${WORKDIR}/git"
+S = "${WORKDIR}/u-boot"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 MKBFS = "${CAVIUM_UBOOT_SCRIPTS}/make-bootfs.py"
 FATFS_TOOL = "${CAVIUM_UBOOT_SCRIPTS}/fatfs-tool"

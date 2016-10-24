@@ -6,10 +6,8 @@ LINUX_VERSION ?= "4.4.13"
 PROVIDES += "virtual/kernel"
 COMPATIBLE_MACHINE = "cavium-thunderx-81xx"
 ARCH = "arm64"
-#SRC_URI[md5sum] = "ef1e12f54b359f7e4254b7341ee0c4de"
-#SRCREV = "2134d97aa3a7ce38bb51f933f2e20cafde371085"
 
-SRC_URI = "file:///home/mjaggi/OCTEONTX-SDK/linux/kernel/linux-aarch64.tar.gz"
+SRC_URI = "${KERNEL_SRC}"
 SRC_URI += "file://defconfig"
 
 S = "${WORKDIR}/linux-aarch64"
