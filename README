@@ -1,7 +1,26 @@
+Release Notes
+====================================================================
+
+This release of meta-layer modifies recipes for kernel and uboot to use 
+the source from a local tar.gz file
+
+Assuming the SDK is at home directory, on my machine home is at /home/mjaggi
+Set KERNEL_SRC and UBOOT_SRC in local.conf as below
+
+KERNEL_SRC =  "file:///home/mjaggi/OCTEONTX-SDK/linux/kernel/linux-aarch64.tar.gz"
+UBOOT_SRC = "file:///home/mjaggi//OCTEONTX-SDK/u-boot.tar.gz"
+
+See: sample_local_conf file for me.
+
 Changes in local.conf for running gdbserver 7.9.1
 --------------------------------------------------
 PREFERRED_PROVDER_gdb = "meta"
 PREFERRED_VERSION_gdb = "7.9.1"
+
+To copy bin/sdk files from SDK
+------------------------------
+cd recipes-bsp/u-boot/u-boot
+sh copy.sh
 
 Tested with poky jethro commit id:
 
