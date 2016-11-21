@@ -1,0 +1,44 @@
+Sample local.conf
+--------------------------
+#set the machine
+MACHINE = "cavium-thunderx-81xx"
+
+#set the preferred kernel and version
+PREFERRED_PROVIDER_virtual/kernel = "linux_thunderx_81xx"
+PREFERRED_VERSION_linux-thunderx-81xx = "4.4.13"
+
+#Enable external toolchain
+EXTERNAL_TOOLCHAIN = "/home/mjaggi/poky_gdb/thunderx-tools-437"
+TCMODE = "external-cavium"
+
+#For ILP32
+TARGET_CFLAGS += " -mabi=ilp32"
+TARGET_LDFLAGS += " -mabi=ilp32"
+BASELIB = "libilp32"
+
+#Additional Packages as part of rootfs
+IMAGE_INSTALL_append += " helloworld"
+IMAGE_INSTALL_append += " openssl"
+IMAGE_INSTALL_append += " lmbench"
+IMAGE_INSTALL_append += " gdb"
+IMAGE_INSTALL_append += " openssh-scp"
+IMAGE_INSTALL_append += " openssh-ssh"
+IMAGE_INSTALL_append += " gdbserver"
+#IMAGE_INSTALL_append += " docker"
+#IMAGE_INSTALL_append += " docker-registry"
+#IMAGE_INSTALL_append += " cgroup-lite"
+
+EXTRA_IMAGE_FEATURES += "ptest-pkgs"
+
+#Kernel modules as part of rootfs
+#IMAGE_INSTALL_append += " kernel-modules"
+PREFERRED_PROVDER_gdb = "meta"
+PREFERRED_VERSION_gdb = "7.9.1"
+
+#Set number of parallel threads
+BB_NUMBER_THREADS="64"
+CAVIUM_BOARD_NAME= "ebb8104"
+CAVIUM_UBOOT_SCRIPTS = "/home/mjaggi//poky_gdb/meta-cavium-arm/recipes-bsp/u-boot/u-boot/"
+KERNEL_SRC =  "file:///home/mjaggi/OCTEONTX-SDK/linux/kernel/linux-aarch64.tar.gz"
+UBOOT_SRC = "file:///home/mjaggi//OCTEONTX-SDK/u-boot.tar.gz"
+
