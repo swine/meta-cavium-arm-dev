@@ -1,7 +1,7 @@
-From ffe80398c062e50952b490a5e254b6b23d058ff4 Mon Sep 17 00:00:00 2001
-From: Andrew Pinski <apinski@cavium.com>
-Date: Tue, 24 May 2016 03:04:38 +0300
-Subject: [PATCH 09/24] arm64: ensure the kernel is compiled for LP64
+From c9b49342587a234e1d556ba3ad605e6636034c4d Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Wed, 14 Dec 2016 06:01:02 -0800
+Subject: [PATCH]  [PATCH 09/24] arm64: ensure the kernel is compiled for LP64
 
 The kernel needs to be compiled as a LP64 binary for ARM64, even when
 using a compiler that defaults to code-generation for the ILP32 ABI.
@@ -18,10 +18,10 @@ Reviewed-by: David Daney <ddaney@caviumnetworks.com>
  1 file changed, 5 insertions(+)
 
 diff --git a/arch/arm64/Makefile b/arch/arm64/Makefile
-index dd09d43..060329d 100644
+index 9d9301e..1c839df 100644
 --- a/arch/arm64/Makefile
 +++ b/arch/arm64/Makefile
-@@ -30,14 +30,19 @@ KBUILD_CFLAGS	+= -mgeneral-regs-only $(lseinstr)
+@@ -30,15 +30,20 @@ KBUILD_CFLAGS	+= -mgeneral-regs-only $(lseinstr)
  KBUILD_CFLAGS	+= $(call cc-option, -mpc-relative-literal-loads)
  KBUILD_AFLAGS	+= $(lseinstr)
  
@@ -33,14 +33,15 @@ index dd09d43..060329d 100644
  AS		+= -EB
  LD		+= -EB
 +LDFLAGS		+= -maarch64linuxb
+ UTS_MACHINE	:= aarch64_be
  else
  KBUILD_CPPFLAGS	+= -mlittle-endian
  AS		+= -EL
  LD		+= -EL
 +LDFLAGS		+= -maarch64linux
+ UTS_MACHINE	:= aarch64
  endif
  
- CHECKFLAGS	+= -D__aarch64__
 -- 
-1.9.1
+2.5.0
 
