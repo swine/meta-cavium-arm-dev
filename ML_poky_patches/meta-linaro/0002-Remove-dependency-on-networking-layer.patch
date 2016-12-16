@@ -1,0 +1,23 @@
+From 08c1c164d770f35be3c31ce4a21e312ed8ee404b Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Thu, 15 Dec 2016 04:23:42 -0800
+Subject: [PATCH 2/2] Remove dependency on networking layer
+
+Signed-off-by: Manish Jaggi <mjaggi@cavium.com>
+---
+ meta-linaro/conf/layer.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meta-linaro/conf/layer.conf b/meta-linaro/conf/layer.conf
+index c019548..fe725d8 100644
+--- a/meta-linaro/conf/layer.conf
++++ b/meta-linaro/conf/layer.conf
+@@ -12,4 +12,4 @@ BBFILE_PRIORITY_linaro = "25"
+ BB_DANGLINGAPPENDS_WARNONLY = "true"
+ 
+ # we need meta-networking for (lib)memcached
+-LAYERDEPENDS_linaro = "networking-layer"
++#LAYERDEPENDS_linaro = "networking-layer"
+-- 
+2.5.0
+

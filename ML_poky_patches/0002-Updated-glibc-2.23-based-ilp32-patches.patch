@@ -1,0 +1,4542 @@
+From a90ef0a2f669a4842ac718294e93fd6826f2225c Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Thu, 15 Dec 2016 21:15:05 -0800
+Subject: [PATCH 2/3] Updated glibc 2.23 based ilp32 patches
+
+Signed-off-by: Manish Jaggi <mjaggi@cavium.com>
+---
+ ...Fix-utmp-struct-for-compatibility-reasons.patch |  55 ++
+ ...002-Add-header-guards-to-sysdep.h-headers.patch |  55 ++
+ ...ynamic-ILP32-AARCH64-relocations-to-elf.h.patch | 219 +++++
+ ...-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch | 161 ++++
+ .../ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch | 191 +++++
+ ..._REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch | 113 +++
+ .../0007-Use-PTR_-macros-in-dl-trampoline.S.patch  |  96 +++
+ .../ilp32_patches/0008-Use-PTR_-in-start.S.patch   |  77 ++
+ .../0009-Use-PTR_REG-in-getcontext.S.patch         |  32 +
+ .../0010-Detect-ILP32-in-configure-scripts.patch   | 165 ++++
+ ...r-ILP32-are-passed-always-via-64bit-value.patch | 129 +++
+ ...ILP32-support-to-elf_machine_load_address.patch |  62 ++
+ .../0013-Set-up-wordsize-for-ILP32.patch           |  42 +
+ .../0014-Add-ILP32-to-makefiles.patch              |  57 ++
+ ...upport-to-ldconfig-for-ILP32-and-libilp32.patch | 110 +++
+ ...LP32-ld.so-to-the-known-interpreter-names.patch |  31 +
+ ...rite.sed-so-that-ilp32-ld.so-can-be-found.patch |  51 ++
+ ...-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch |  80 ++
+ .../0019-Add-typesizes.h-for-ILP32.patch           | 129 +++
+ .../0020-Make-lp64-and-ilp32-directories.patch     | 714 ++++++++++++++++
+ ...-ILP32-introduce-syscalls-that-pass-off_t.patch | 242 ++++++
+ .../0022-ILP32-support-stat-syscall-family.patch   | 893 +++++++++++++++++++++
+ ...louse-input-arguments-in-system-functions.patch | 340 ++++++++
+ .../0024-Add-support-for-AT_ARM64_MIDR.patch       |  86 ++
+ .../ilp32_patches/0025-Fix-ILP32-warning.patch     |  54 ++
+ .../0026-Change-type-of-__align-to-long-long.patch |  26 +
+ ..._MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch |  55 ++
+ meta/recipes-core/glibc/glibc_2.23.bb              |   2 +-
+ meta/recipes-core/glibc/ilp32_patches.inc          |  27 +
+ 29 files changed, 4293 insertions(+), 1 deletion(-)
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0001-Fix-utmp-struct-for-compatibility-reasons.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0002-Add-header-guards-to-sysdep.h-headers.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0003-Add-dynamic-ILP32-AARCH64-relocations-to-elf.h.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0004-Add-PTR_REG-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0006-Use-PTR_REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0007-Use-PTR_-macros-in-dl-trampoline.S.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0008-Use-PTR_-in-start.S.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0009-Use-PTR_REG-in-getcontext.S.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0010-Detect-ILP32-in-configure-scripts.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0011-Syscalls-for-ILP32-are-passed-always-via-64bit-value.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0012-Add-ILP32-support-to-elf_machine_load_address.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0013-Set-up-wordsize-for-ILP32.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0014-Add-ILP32-to-makefiles.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0015-Add-support-to-ldconfig-for-ILP32-and-libilp32.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0016-Add-ILP32-ld.so-to-the-known-interpreter-names.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0017-Add-ldd-rewrite.sed-so-that-ilp32-ld.so-can-be-found.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0018-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0019-Add-typesizes.h-for-ILP32.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0020-Make-lp64-and-ilp32-directories.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0021-ILP32-introduce-syscalls-that-pass-off_t.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0022-ILP32-support-stat-syscall-family.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0023-delouse-input-arguments-in-system-functions.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0025-Fix-ILP32-warning.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0026-Change-type-of-__align-to-long-long.patch
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch
+ create mode 100644 meta/recipes-core/glibc/ilp32_patches.inc
+
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0001-Fix-utmp-struct-for-compatibility-reasons.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0001-Fix-utmp-struct-for-compatibility-reasons.patch
+new file mode 100644
+index 0000000..0260c4a
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0001-Fix-utmp-struct-for-compatibility-reasons.patch
+@@ -0,0 +1,55 @@
++From d35561b0caf0049ba55c33176caf897c6ca4b558 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:44 +0300
++Subject: [PATCH 01/27] Fix utmp struct for compatibility reasons.
++
++NOTE This is an ABI change for AARCH64.
++If you have some AARCH32 and AARCH64 applications and they both use
++utmp, one of them will fail due to the use of time_t inside the
++utmp binary format.
++
++This fixes the problem by setting __WORDSIZE_TIME64_COMPAT32.
++
++* sysdeps/aarch64/bits/wordsize.h: New file.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/bits/wordsize.h | 26 ++++++++++++++++++++++++++
++ 1 file changed, 26 insertions(+)
++ create mode 100644 sysdeps/aarch64/bits/wordsize.h
++
++diff --git a/sysdeps/aarch64/bits/wordsize.h b/sysdeps/aarch64/bits/wordsize.h
++new file mode 100644
++index 0000000..3ecccaa
++--- /dev/null
+++++ b/sysdeps/aarch64/bits/wordsize.h
++@@ -0,0 +1,26 @@
+++/* Copyright (C) 2014 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#define __WORDSIZE	64
+++
+++/* LP64 ABI has a 64bit time_t.
+++   This allows aarch32 and AARCH64 applications
+++   both access utmp. */
+++#define __WORDSIZE_TIME64_COMPAT32	1
+++
+++/* LP64 use the 64bit system call interface. */
+++#define __SYSCALL_WORDSIZE 64
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0002-Add-header-guards-to-sysdep.h-headers.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0002-Add-header-guards-to-sysdep.h-headers.patch
+new file mode 100644
+index 0000000..43b6909
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0002-Add-header-guards-to-sysdep.h-headers.patch
+@@ -0,0 +1,55 @@
++From 41ab20dc890c9ae04698adb4c22ee87bc6dfd5fb Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:46 +0300
++Subject: [PATCH 02/27] Add header guards to sysdep.h headers.
++
++* sysdeps/aarch64/sysdep.h: Add header guards.
++
++[AARCH64] Remove 64 from some relocation names as they have been renamed in later versions of the spec.
++
++The AARCH64 elf ABI spec renamed some relocations removing 64 from the TLS
++relocation names to make them constaint with the ILP32 named ones.
++
++* elf/elf.h (R_AARCH64_TLS_DTPMOD64): Rename to ..
++(R_AARCH64_TLS_DTPMOD): This.
++(R_AARCH64_TLS_DTPREL64): Rename to ...
++(R_AARCH64_TLS_DTPREL): This.
++(R_AARCH64_TLS_TPREL64): Rename to ...
++(R_AARCH64_TLS_TPREL): This.
++* sysdeps/aarch64/dl-machine.h (elf_machine_type_class): Update
++R_AARCH64_TLS_DTPMOD64, R_AARCH64_TLS_DTPREL64, and R_AARCH64_TLS_TPREL64.
++(elf_machine_rela): Likewise.
++
++[AARCH64] Fix pltenter and pltexit for ILP32.
++
++* sysdeps/aarch64/bits/link.h (la_aarch64_gnu_pltenter): Use
++ElfW macro instead of hardcoded Elf64 types.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/sysdep.h | 5 +++++
++ 1 file changed, 5 insertions(+)
++
++diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
++index 6b728ec..594ab0b 100644
++--- a/sysdeps/aarch64/sysdep.h
+++++ b/sysdeps/aarch64/sysdep.h
++@@ -16,6 +16,9 @@
++    License along with the GNU C Library; if not, see
++    <http://www.gnu.org/licenses/>.  */
++ 
+++#ifndef _AARCH64_SYSDEP_H
+++#define _AARCH64_SYSDEP_H
+++
++ #include <sysdeps/generic/sysdep.h>
++ 
++ #ifdef	__ASSEMBLER__
++@@ -96,3 +99,5 @@
++ #define mcount		_mcount
++ 
++ #endif	/* __ASSEMBLER__ */
+++
+++#endif  /* _AARCH64_SYSDEP_H */
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0003-Add-dynamic-ILP32-AARCH64-relocations-to-elf.h.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0003-Add-dynamic-ILP32-AARCH64-relocations-to-elf.h.patch
+new file mode 100644
+index 0000000..d713e46
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0003-Add-dynamic-ILP32-AARCH64-relocations-to-elf.h.patch
+@@ -0,0 +1,219 @@
++From b8c25733d66936dd88ccf261d68176bfb62dac23 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:47 +0300
++Subject: [PATCH 03/27] Add dynamic ILP32 AARCH64 relocations to elf.h
++
++elf/elf.h (R_AARCH64_P32_ABS32, R_AARCH64_P32_COPY,
++R_AARCH64_P32_GLOB_DAT, R_AARCH64_P32_JUMP_SLOT,
++R_AARCH64_P32_RELATIVE, R_AARCH64_P32_TLS_DTPMOD,
++R_AARCH64_P32_TLS_DTPREL, R_AARCH64_P32_TLS_TPREL,
++R_AARCH64_P32_TLSDESC, R_AARCH64_P32_IRELATIVE): Define.
++
++[AARCH64] Use ELFW and ElfW macros instead of ELF64 and Elf64 names.
++
++* sysdeps/aarch64/dl-machine.h
++(elf_machine_runtime_setup): Use ElfW(Addr).
++(elf_machine_rela): Use ELFW(R_TYPE).
++(elf_machine_lazy_rel): Likewise.
++
++[AARCH64] Introduce AARCH64_R so we can reuse the reloc code between ILP32 and LP64.
++
++* sysdeps/aarch64/sysdep.h (AARCH64_R): Define.
++* sysdeps/aarch64/dl-irel.h: Include sysdep.h
++(elf_irela): Use reloc names based on AARCH64_R.
++* sysdeps/aarch64/dl-machine.h: Include sysdep.h
++(elf_machine_type_class): Use reloc names based on AARCH64_R.
++(elf_machine_rela): Likewise.
++(elf_machine_lazy_rel): Likewise.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/dl-irel.h    |  3 ++-
++ sysdeps/aarch64/dl-machine.h | 53 +++++++++++++++++++++++---------------------
++ sysdeps/aarch64/sysdep.h     |  6 +++++
++ 3 files changed, 36 insertions(+), 26 deletions(-)
++
++diff --git a/sysdeps/aarch64/dl-irel.h b/sysdeps/aarch64/dl-irel.h
++index 63a8e50..460454f 100644
++--- a/sysdeps/aarch64/dl-irel.h
+++++ b/sysdeps/aarch64/dl-irel.h
++@@ -23,6 +23,7 @@
++ #include <stdio.h>
++ #include <unistd.h>
++ #include <ldsodefs.h>
+++#include <sysdep.h>
++ 
++ #define ELF_MACHINE_IRELA	1
++ 
++@@ -40,7 +41,7 @@ elf_irela (const ElfW(Rela) *reloc)
++   ElfW(Addr) *const reloc_addr = (void *) reloc->r_offset;
++   const unsigned long int r_type = ELFW(R_TYPE) (reloc->r_info);
++ 
++-  if (__glibc_likely (r_type == R_AARCH64_IRELATIVE))
+++  if (__glibc_likely (r_type == AARCH64_R(IRELATIVE)))
++     {
++       ElfW(Addr) value = elf_ifunc_invoke (reloc->r_addend);
++       *reloc_addr = value;
++diff --git a/sysdeps/aarch64/dl-machine.h b/sysdeps/aarch64/dl-machine.h
++index 282805e..a16cb11 100644
++--- a/sysdeps/aarch64/dl-machine.h
+++++ b/sysdeps/aarch64/dl-machine.h
++@@ -21,6 +21,7 @@
++ 
++ #define ELF_MACHINE_NAME "aarch64"
++ 
+++#include <sysdep.h>
++ #include <tls.h>
++ #include <dl-tlsdesc.h>
++ #include <dl-irel.h>
++@@ -190,15 +191,15 @@ _dl_start_user:							\n\
++ ");
++ 
++ #define elf_machine_type_class(type)					\
++-  ((((type) == R_AARCH64_JUMP_SLOT ||					\
++-     (type) == R_AARCH64_TLS_DTPMOD ||					\
++-     (type) == R_AARCH64_TLS_DTPREL ||					\
++-     (type) == R_AARCH64_TLS_TPREL ||					\
++-     (type) == R_AARCH64_TLSDESC) * ELF_RTYPE_CLASS_PLT)		\
++-   | (((type) == R_AARCH64_COPY) * ELF_RTYPE_CLASS_COPY)		\
++-   | (((type) == R_AARCH64_GLOB_DAT) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
+++  ((((type) == AARCH64_R(JUMP_SLOT) ||					\
+++     (type) == AARCH64_R(TLS_DTPMOD) ||					\
+++     (type) == AARCH64_R(TLS_DTPREL) ||					\
+++     (type) == AARCH64_R(TLS_TPREL) ||					\
+++     (type) == AARCH64_R(TLSDESC)) * ELF_RTYPE_CLASS_PLT)		\
+++   | (((type) == AARCH64_R(COPY)) * ELF_RTYPE_CLASS_COPY)		\
+++   | (((type) == AARCH64_R(GLOB_DAT)) * ELF_RTYPE_CLASS_EXTERN_PROTECTED_DATA))
++ 
++-#define ELF_MACHINE_JMP_SLOT	R_AARCH64_JUMP_SLOT
+++#define ELF_MACHINE_JMP_SLOT	AARCH64_R(JUMP_SLOT)
++ 
++ /* AArch64 uses RELA not REL */
++ #define ELF_MACHINE_NO_REL 1
++@@ -237,9 +238,9 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ 		  void *const reloc_addr_arg, int skip_ifunc)
++ {
++   ElfW(Addr) *const reloc_addr = reloc_addr_arg;
++-  const unsigned int r_type = ELF64_R_TYPE (reloc->r_info);
+++  const unsigned int r_type = ELFW(R_TYPE) (reloc->r_info);
++ 
++-  if (__builtin_expect (r_type == R_AARCH64_RELATIVE, 0))
+++  if (__builtin_expect (r_type == AARCH64_R(RELATIVE), 0))
++       *reloc_addr = map->l_addr + reloc->r_addend;
++   else if (__builtin_expect (r_type == R_AARCH64_NONE, 0))
++       return;
++@@ -257,7 +258,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ 
++       switch (r_type)
++ 	{
++-	case R_AARCH64_COPY:
+++	case AARCH64_R(COPY):
++ 	  if (sym == NULL)
++ 	      break;
++ 
++@@ -275,15 +276,17 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ 		  MIN (sym->st_size, refsym->st_size));
++ 	  break;
++ 
++-	case R_AARCH64_RELATIVE:
++-	case R_AARCH64_GLOB_DAT:
++-	case R_AARCH64_JUMP_SLOT:
++-	case R_AARCH64_ABS32:
++-	case R_AARCH64_ABS64:
+++	case AARCH64_R(RELATIVE):
+++	case AARCH64_R(GLOB_DAT):
+++	case AARCH64_R(JUMP_SLOT):
+++	case AARCH64_R(ABS32):
+++#ifdef __LP64__
+++	case AARCH64_R(ABS64):
+++#endif
++ 	  *reloc_addr = value + reloc->r_addend;
++ 	  break;
++ 
++-	case R_AARCH64_TLSDESC:
+++	case AARCH64_R(TLSDESC):
++ 	  {
++ 	    struct tlsdesc volatile *td =
++ 	      (struct tlsdesc volatile *)reloc_addr;
++@@ -318,7 +321,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ 	    break;
++ 	  }
++ 
++-	case R_AARCH64_TLS_DTPMOD:
+++	case AARCH64_R(TLS_DTPMOD):
++ #ifdef RTLD_BOOTSTRAP
++ 	  *reloc_addr = 1;
++ #else
++@@ -329,12 +332,12 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ #endif
++ 	  break;
++ 
++-	case R_AARCH64_TLS_DTPREL:
+++	case AARCH64_R(TLS_DTPREL):
++ 	  if (sym)
++ 	    *reloc_addr = sym->st_value + reloc->r_addend;
++ 	  break;
++ 
++-	case R_AARCH64_TLS_TPREL:
+++	case AARCH64_R(TLS_TPREL):
++ 	  if (sym)
++ 	    {
++ 	      CHECK_STATIC_TLS (map, sym_map);
++@@ -343,7 +346,7 @@ elf_machine_rela (struct link_map *map, const ElfW(Rela) *reloc,
++ 	    }
++ 	  break;
++ 
++-	case R_AARCH64_IRELATIVE:
+++	case AARCH64_R(IRELATIVE):
++ 	  value = map->l_addr + reloc->r_addend;
++ 	  value = elf_ifunc_invoke (value);
++ 	  *reloc_addr = value;
++@@ -374,16 +377,16 @@ elf_machine_lazy_rel (struct link_map *map,
++ 		      int skip_ifunc)
++ {
++   ElfW(Addr) *const reloc_addr = (void *) (l_addr + reloc->r_offset);
++-  const unsigned int r_type = ELF64_R_TYPE (reloc->r_info);
+++  const unsigned int r_type = ELFW(R_TYPE) (reloc->r_info);
++   /* Check for unexpected PLT reloc type.  */
++-  if (__builtin_expect (r_type == R_AARCH64_JUMP_SLOT, 1))
+++  if (__builtin_expect (r_type == AARCH64_R(JUMP_SLOT), 1))
++     {
++       if (__builtin_expect (map->l_mach.plt, 0) == 0)
++ 	*reloc_addr += l_addr;
++       else
++ 	*reloc_addr = map->l_mach.plt;
++     }
++-  else if (__builtin_expect (r_type == R_AARCH64_TLSDESC, 1))
+++  else if (__builtin_expect (r_type == AARCH64_R(TLSDESC), 1))
++     {
++       struct tlsdesc volatile *td =
++ 	(struct tlsdesc volatile *)reloc_addr;
++@@ -392,7 +395,7 @@ elf_machine_lazy_rel (struct link_map *map,
++       td->entry = (void*)(D_PTR (map, l_info[ADDRIDX (DT_TLSDESC_PLT)])
++ 			  + map->l_addr);
++     }
++-  else if (__glibc_unlikely (r_type == R_AARCH64_IRELATIVE))
+++  else if (__glibc_unlikely (r_type == AARCH64_R(IRELATIVE)))
++     {
++       ElfW(Addr) value = map->l_addr + reloc->r_addend;
++       if (__glibc_likely (!skip_ifunc))
++diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
++index 594ab0b..4cb028f 100644
++--- a/sysdeps/aarch64/sysdep.h
+++++ b/sysdeps/aarch64/sysdep.h
++@@ -21,6 +21,12 @@
++ 
++ #include <sysdeps/generic/sysdep.h>
++ 
+++#ifdef __LP64__
+++#define AARCH64_R(NAME)		R_AARCH64_ ## NAME
+++#else
+++#define AARCH64_R(NAME)		R_AARCH64_P32_ ## NAME
+++#endif
+++
++ #ifdef	__ASSEMBLER__
++ 
++ /* Syntactic details of assembler.  */
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0004-Add-PTR_REG-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0004-Add-PTR_REG-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch
+new file mode 100644
+index 0000000..21e6916
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0004-Add-PTR_REG-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch
+@@ -0,0 +1,161 @@
++From 3bd271172998d23cd6923ddb4d0e15c15abdd3a0 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:48 +0300
++Subject: [PATCH 04/27] Add PTR_REG, PTR_LOG_SIZE, and PTR_SIZE. Use it in
++ LDST_PCREL and LDST_GLOBAL.
++
++This patch adds a few extra macros which are useful for ILP32 and updates
++PTR_MANGLE and PTR_DEMANGLE to use the some of the new macros.
++
++* sysdeps/aarch64/sysdep.h (PTR_REG): New macro.
++(PTR_LOG_SIZE): New macro.
++(PTR_SIZE): New macro.
++(LDST_PCREL): Use arguments as register numbers rather register names.
++Use PTR_REG for the register when loading.
++* sysdeps/unix/sysv/linux/aarch64/sysdep.h (PTR_MANGLE): Add a comment
++about that the arguments are register numbers rather register names.
++(PTR_DEMANGLE): Likewise.
++* sysdeps/aarch64/__longjmp.S (__longjmp): Update calls to PTR_DEMANGLE.
++* sysdeps/aarch64/setjmp.S (__sigsetjmp): Update calls to PTR_MANGLE.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/__longjmp.S              |  4 ++--
++ sysdeps/aarch64/setjmp.S                 |  4 ++--
++ sysdeps/aarch64/sysdep.h                 | 28 ++++++++++++++++++----------
++ sysdeps/unix/sysv/linux/aarch64/sysdep.h |  8 ++++++--
++ 4 files changed, 28 insertions(+), 16 deletions(-)
++
++diff --git a/sysdeps/aarch64/__longjmp.S b/sysdeps/aarch64/__longjmp.S
++index 65116be..58332be 100644
++--- a/sysdeps/aarch64/__longjmp.S
+++++ b/sysdeps/aarch64/__longjmp.S
++@@ -53,7 +53,7 @@ ENTRY (__longjmp)
++ 	ldp	x27, x28, [x0, #JB_X27<<3]
++ #ifdef PTR_DEMANGLE
++ 	ldp	x29,  x4, [x0, #JB_X29<<3]
++-	PTR_DEMANGLE (x30, x4, x3, x2)
+++	PTR_DEMANGLE (30, 4, 3, 2)
++ #else
++ 	ldp	x29, x30, [x0, #JB_X29<<3]
++ #endif
++@@ -98,7 +98,7 @@ ENTRY (__longjmp)
++ 	cfi_same_value(d15)
++ #ifdef PTR_DEMANGLE
++ 	ldr	x4, [x0, #JB_SP<<3]
++-	PTR_DEMANGLE (x5, x4, x3, x2)
+++	PTR_DEMANGLE (5, 4, 3, 2)
++ #else
++ 	ldr	x5, [x0, #JB_SP<<3]
++ #endif
++diff --git a/sysdeps/aarch64/setjmp.S b/sysdeps/aarch64/setjmp.S
++index 22f4368..da83f19 100644
++--- a/sysdeps/aarch64/setjmp.S
+++++ b/sysdeps/aarch64/setjmp.S
++@@ -42,7 +42,7 @@ ENTRY (__sigsetjmp)
++ 	stp	x27, x28, [x0, #JB_X27<<3]
++ 
++ #ifdef PTR_MANGLE
++-	PTR_MANGLE (x4, x30, x3, x2)
+++	PTR_MANGLE (4, 30, 3, 2)
++ 	stp	x29,  x4, [x0, #JB_X29<<3]
++ #else
++ 	stp	x29, x30, [x0, #JB_X29<<3]
++@@ -57,7 +57,7 @@ ENTRY (__sigsetjmp)
++ 	stp	d14, d15, [x0, #JB_D14<<3]
++ #ifdef PTR_MANGLE
++ 	mov	x4, sp
++-	PTR_MANGLE (x5, x4, x3, x2)
+++	PTR_MANGLE (5, 4, 3, 2)
++ 	str	x5, [x0, #JB_SP<<3]
++ #else
++ 	mov	x2,  sp
++diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
++index 4cb028f..f2ea821 100644
++--- a/sysdeps/aarch64/sysdep.h
+++++ b/sysdeps/aarch64/sysdep.h
++@@ -23,10 +23,16 @@
++ 
++ #ifdef __LP64__
++ #define AARCH64_R(NAME)		R_AARCH64_ ## NAME
+++#define PTR_REG(n)	x##n
+++#define PTR_LOG_SIZE	3
++ #else
++ #define AARCH64_R(NAME)		R_AARCH64_P32_ ## NAME
+++#define PTR_REG(n)	w##n
+++#define PTR_LOG_SIZE	2
++ #endif
++ 
+++#define PTR_SIZE	(1<<PTR_LOG_SIZE)
+++
++ #ifdef	__ASSEMBLER__
++ 
++ /* Syntactic details of assembler.  */
++@@ -87,16 +93,18 @@
++ # define L(name)         .L##name
++ #endif
++ 
++-/* Load or store to/from a pc-relative EXPR into/from R, using T.  */
++-#define LDST_PCREL(OP, R, T, EXPR)  \
++-	adrp	T, EXPR;	    \
++-	OP	R, [T, #:lo12:EXPR];\
++-
++-/* Load or store to/from a got-relative EXPR into/from R, using T.  */
++-#define LDST_GLOBAL(OP, R, T, EXPR)     \
++-	adrp	T, :got:EXPR;		\
++-	ldr	T, [T, #:got_lo12:EXPR];\
++-	OP	R, [T];
+++/* Load or store to/from a pc-relative EXPR into/from R, using T.
+++   Note R and T are register numbers and not register names.  */
+++#define LDST_PCREL(OP, R, T, EXPR)			\
+++	adrp	x##T, EXPR;				\
+++	OP	PTR_REG (R), [x##T, #:lo12:EXPR];	\
+++
+++/* Load or store to/from a got-relative EXPR into/from R, using T.
+++   Note R and T are register numbers and not register names.  */
+++#define LDST_GLOBAL(OP, R, T,  EXPR)			\
+++	adrp	x##T, :got:EXPR;			\
+++	ldr	PTR_REG (T), [x##T, #:got_lo12:EXPR];	\
+++	OP	x##R, [x##T];
++ 
++ /* Since C identifiers are not normally prefixed with an underscore
++    on this system, the asm identifier `syscall_error' intrudes on the
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sysdep.h b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++index a397e50..1ffabc2 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sysdep.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++@@ -250,12 +250,14 @@
++      (!defined SHARED && (IS_IN (libc) \
++ 			  || IS_IN (libpthread))))
++ # ifdef __ASSEMBLER__
+++/* Note, dst, src, guard, and tmp are all register numbers rather than
+++   register names so they will work with both ILP32 and LP64. */
++ #  define PTR_MANGLE(dst, src, guard, tmp)                                \
++   LDST_PCREL (ldr, guard, tmp, C_SYMBOL_NAME(__pointer_chk_guard_local)); \
++   PTR_MANGLE2 (dst, src, guard)
++ /* Use PTR_MANGLE2 for efficiency if guard is already loaded.  */
++ #  define PTR_MANGLE2(dst, src, guard)\
++-  eor dst, src, guard
+++  eor x##dst, x##src, x##guard
++ #  define PTR_DEMANGLE(dst, src, guard, tmp)\
++   PTR_MANGLE (dst, src, guard, tmp)
++ #  define PTR_DEMANGLE2(dst, src, guard)\
++@@ -268,12 +270,14 @@ extern uintptr_t __pointer_chk_guard_local attribute_relro attribute_hidden;
++ # endif
++ #else
++ # ifdef __ASSEMBLER__
+++/* Note, dst, src, guard, and tmp are all register numbers rather than
+++   register names so they will work with both ILP32 and LP64. */
++ #  define PTR_MANGLE(dst, src, guard, tmp)                             \
++   LDST_GLOBAL (ldr, guard, tmp, C_SYMBOL_NAME(__pointer_chk_guard));   \
++   PTR_MANGLE2 (dst, src, guard)
++ /* Use PTR_MANGLE2 for efficiency if guard is already loaded.  */
++ #  define PTR_MANGLE2(dst, src, guard)\
++-  eor dst, src, guard
+++  eor x##dst, x##src, x##guard
++ #  define PTR_DEMANGLE(dst, src, guard, tmp)\
++   PTR_MANGLE (dst, src, guard, tmp)
++ #  define PTR_DEMANGLE2(dst, src, guard)\
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch
+new file mode 100644
+index 0000000..3abd803
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch
+@@ -0,0 +1,191 @@
++From 34d99333f32f210d0f56666baf9fcabee8d65d81 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:49 +0300
++Subject: [PATCH 05/27] Use PTR_REG in crti.S.
++
++call_weak_fn loads from a pointer, so use PTR_REG so the load
++is 32bits for ILP32.
++
++* sysdeps/aarch64/crti.S: Include sysdep.h
++(call_weak_fn): Use PTR_REG when loading from
++PREINIT_FUNCTION.
++
++AARCH64: Make RTLD_START paramatizable
++
++Make RTLD_START paramatizable for ILP32 and LP64 usage and provides common
++code between ILP32.
++
++* sysdeps/aarch64/dl-machine.h (RTLD_START): Rename to ...
++(RTLD_START_1): This and add PTR, PTR_SIZE_LOG, and PTR_SP arguments.
++(RTLD_START): New macro which uses RTLD_START_1.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/crti.S       |   3 +-
++ sysdeps/aarch64/dl-machine.h | 128 ++++++++++++++++++++++---------------------
++ 2 files changed, 69 insertions(+), 62 deletions(-)
++
++diff --git a/sysdeps/aarch64/crti.S b/sysdeps/aarch64/crti.S
++index 53ccb42..6e149b5 100644
++--- a/sysdeps/aarch64/crti.S
+++++ b/sysdeps/aarch64/crti.S
++@@ -39,6 +39,7 @@
++    they can be called as functions.  The symbols _init and _fini are
++    magic and cause the linker to emit DT_INIT and DT_FINI.  */
++ 
+++#include <sysdep.h>
++ #include <libc-symbols.h>
++ 
++ #ifndef PREINIT_FUNCTION
++@@ -60,7 +61,7 @@
++ 	.type	call_weak_fn, %function
++ call_weak_fn:
++ 	adrp	x0, :got:PREINIT_FUNCTION
++-	ldr	x0, [x0, #:got_lo12:PREINIT_FUNCTION]
+++	ldr	PTR_REG(0), [x0, #:got_lo12:PREINIT_FUNCTION]
++ 	cbz	x0, 1f
++ 	b	PREINIT_FUNCTION
++ 1:
++diff --git a/sysdeps/aarch64/dl-machine.h b/sysdeps/aarch64/dl-machine.h
++index a16cb11..7a49852 100644
++--- a/sysdeps/aarch64/dl-machine.h
+++++ b/sysdeps/aarch64/dl-machine.h
++@@ -126,68 +126,74 @@ elf_machine_runtime_setup (struct link_map *l, int lazy, int profile)
++ /* Initial entry point for the dynamic linker. The C function
++    _dl_start is the real entry point, its return value is the user
++    program's entry point */
+++#ifdef __LP64__
+++#define RTLD_START RTLD_START_1("x", "3", "sp")
+++#else
+++#define RTLD_START RTLD_START_1("w", "2", "wsp")
+++#endif
+++
++ 
++-#define RTLD_START asm ("\
++-.text								\n\
++-.globl _start							\n\
++-.type _start, %function						\n\
++-.globl _dl_start_user						\n\
++-.type _dl_start_user, %function					\n\
++-_start:								\n\
++-	mov	x0,	sp					\n\
++-	bl	_dl_start					\n\
++-	// returns user entry point in x0			\n\
++-	mov	x21, x0						\n\
++-_dl_start_user:							\n\
++-	// get the original arg count				\n\
++-	ldr	x1, [sp]					\n\
++-	// get the argv address					\n\
++-	add	x2, sp, #8					\n\
++-	// get _dl_skip_args to see if we were			\n\
++-	// invoked as an executable				\n\
++-	adrp	x4, _dl_skip_args				\n\
++-        ldr	w4, [x4, #:lo12:_dl_skip_args]			\n\
++-	// do we need to adjust argc/argv			\n\
++-        cmp	w4, 0						\n\
++-	beq	.L_done_stack_adjust				\n\
++-	// subtract _dl_skip_args from original arg count	\n\
++-	sub	x1, x1, x4					\n\
++-	// store adjusted argc back to stack			\n\
++-	str	x1, [sp]					\n\
++-	// find the first unskipped argument			\n\
++-	mov	x3, x2						\n\
++-	add	x4, x2, x4, lsl #3				\n\
++-	// shuffle argv down					\n\
++-1:	ldr	x5, [x4], #8					\n\
++-	str	x5, [x3], #8					\n\
++-	cmp	x5, #0						\n\
++-	bne	1b						\n\
++-	// shuffle envp down					\n\
++-1:	ldr	x5, [x4], #8					\n\
++-	str	x5, [x3], #8					\n\
++-	cmp	x5, #0						\n\
++-	bne	1b						\n\
++-	// shuffle auxv down					\n\
++-1:	ldp	x0, x5, [x4, #16]!				\n\
++-	stp	x0, x5, [x3], #16				\n\
++-	cmp	x0, #0						\n\
++-	bne	1b						\n\
++-	// Update _dl_argv					\n\
++-	adrp	x3, _dl_argv					\n\
++-	str	x2, [x3, #:lo12:_dl_argv]			\n\
++-.L_done_stack_adjust:						\n\
++-	// compute envp						\n\
++-	add	x3, x2, x1, lsl #3				\n\
++-	add	x3, x3, #8					\n\
++-	adrp	x16, _rtld_local				\n\
++-        add	x16, x16, #:lo12:_rtld_local			\n\
++-        ldr	x0, [x16]					\n\
++-	bl	_dl_init					\n\
++-	// load the finalizer function				\n\
++-	adrp	x0, _dl_fini					\n\
++-	add	x0, x0, #:lo12:_dl_fini				\n\
++-	// jump to the user_s entry point			\n\
++-	br      x21						\n\
+++#define RTLD_START_1(PTR, PTR_SIZE_LOG, PTR_SP) asm ("\
+++.text									\n\
+++.globl _start								\n\
+++.type _start, %function							\n\
+++.globl _dl_start_user							\n\
+++.type _dl_start_user, %function						\n\
+++_start:									\n\
+++	mov	" PTR "0, " PTR_SP "					\n\
+++	bl	_dl_start						\n\
+++	// returns user entry point in x0				\n\
+++	mov	x21, x0							\n\
+++_dl_start_user:								\n\
+++	// get the original arg count					\n\
+++	ldr	" PTR "1, [sp]						\n\
+++	// get the argv address						\n\
+++	add	" PTR "2, " PTR_SP ", #(1<<"  PTR_SIZE_LOG ")		\n\
+++	// get _dl_skip_args to see if we were				\n\
+++	// invoked as an executable					\n\
+++	adrp	x4, _dl_skip_args					\n\
+++        ldr	w4, [x4, #:lo12:_dl_skip_args]				\n\
+++	// do we need to adjust argc/argv				\n\
+++        cmp	w4, 0							\n\
+++	beq	.L_done_stack_adjust					\n\
+++	// subtract _dl_skip_args from original arg count		\n\
+++	sub	" PTR "1, " PTR "1, " PTR "4				\n\
+++	// store adjusted argc back to stack				\n\
+++	str	" PTR "1, [sp]						\n\
+++	// find the first unskipped argument				\n\
+++	mov	" PTR "3, " PTR "2					\n\
+++	add	" PTR "4, " PTR "2, " PTR "4, lsl #" PTR_SIZE_LOG "	\n\
+++	// shuffle argv down						\n\
+++1:	ldr	" PTR "5, [x4], #(1<<"  PTR_SIZE_LOG ")			\n\
+++	str	" PTR "5, [x3], #(1<<"  PTR_SIZE_LOG ")			\n\
+++	cmp	" PTR "5, #0						\n\
+++	bne	1b							\n\
+++	// shuffle envp down						\n\
+++1:	ldr	" PTR "5, [x4], #(1<<"  PTR_SIZE_LOG ")			\n\
+++	str	" PTR "5, [x3], #(1<<"  PTR_SIZE_LOG ")			\n\
+++	cmp	" PTR "5, #0						\n\
+++	bne	1b							\n\
+++	// shuffle auxv down						\n\
+++1:	ldp	" PTR "0, " PTR "5, [x4, #(2<<"  PTR_SIZE_LOG ")]!	\n\
+++	stp	" PTR "0, " PTR "5, [x3], #(2<<"  PTR_SIZE_LOG ")	\n\
+++	cmp	" PTR "0, #0						\n\
+++	bne	1b							\n\
+++	// Update _dl_argv						\n\
+++	adrp	x3, _dl_argv						\n\
+++	str	" PTR "2, [x3, #:lo12:_dl_argv]				\n\
+++.L_done_stack_adjust:							\n\
+++	// compute envp							\n\
+++	add	" PTR "3, " PTR "2, " PTR "1, lsl #" PTR_SIZE_LOG "	\n\
+++	add	" PTR "3, " PTR "3, #(1<<"  PTR_SIZE_LOG ")		\n\
+++	adrp	x16, _rtld_local					\n\
+++        add	" PTR "16, " PTR "16, #:lo12:_rtld_local		\n\
+++        ldr	" PTR "0, [x16]						\n\
+++	bl	_dl_init						\n\
+++	// load the finalizer function					\n\
+++	adrp	x0, _dl_fini						\n\
+++	add	" PTR "0, " PTR "0, #:lo12:_dl_fini			\n\
+++	// jump to the user_s entry point				\n\
+++	br      x21							\n\
++ ");
++ 
++ #define elf_machine_type_class(type)					\
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0006-Use-PTR_REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0006-Use-PTR_REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch
+new file mode 100644
+index 0000000..9d87c8f
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0006-Use-PTR_REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch
+@@ -0,0 +1,113 @@
++From 82188dc87ea449c7400748e99e8e6ff9fb1f512e Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:50 +0300
++Subject: [PATCH 06/27] Use PTR_REG/PTR_SIZE/PTR_SIZE_LOG in dl-tlsesc.S
++
++This converts dl-tlsdesc.S code over to use the new macros which allows for
++sharing between ILP32 and LP64 code.
++
++* sysdeps/aarch64/dl-tlsdesc.S (_dl_tlsdesc_return): Use PTR_REG.
++(_dl_tlsdesc_undefweak): Use PTR_REG, PTR_SIZE.
++(_dl_tlsdesc_dynamic): Likewise.
++(_dl_tlsdesc_resolve_rela): Likewise.
++(_dl_tlsdesc_resolve_hold): Likewise.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/dl-tlsdesc.S | 36 ++++++++++++++++++------------------
++ 1 file changed, 18 insertions(+), 18 deletions(-)
++
++diff --git a/sysdeps/aarch64/dl-tlsdesc.S b/sysdeps/aarch64/dl-tlsdesc.S
++index 05be370..fe8a17d 100644
++--- a/sysdeps/aarch64/dl-tlsdesc.S
+++++ b/sysdeps/aarch64/dl-tlsdesc.S
++@@ -74,7 +74,7 @@
++ 	cfi_startproc
++ 	.align 2
++ _dl_tlsdesc_return:
++-	ldr	x0, [x0, #8]
+++	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	RET
++ 	cfi_endproc
++ 	.size	_dl_tlsdesc_return, .-_dl_tlsdesc_return
++@@ -126,9 +126,9 @@ _dl_tlsdesc_undefweak:
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++ 	ldar	xzr, [x0]
++-	ldr	x0, [x0, #8]
+++	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	mrs	x1, tpidr_el0
++-	sub	x0, x0, x1
+++	sub	PTR_REG (0), PTR_REG (0), PTR_REG (1)
++ 	ldr	x1, [sp], #16
++ 	cfi_adjust_cfa_offset (-16)
++ 	RET
++@@ -189,20 +189,20 @@ _dl_tlsdesc_dynamic:
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++ 	ldar	xzr, [x0]
++-	ldr	x1, [x0,#8]
++-	ldr	x0, [x4]
++-	ldr	x3, [x1,#16]
++-	ldr	x2, [x0]
++-	cmp	x3, x2
+++	ldr	PTR_REG (1), [x0,#PTR_SIZE]
+++	ldr	PTR_REG (0), [x4]
+++	ldr	PTR_REG (3), [x1,#(PTR_SIZE * 2)]
+++	ldr	PTR_REG (2), [x0]
+++	cmp	PTR_REG (3), PTR_REG (2)
++ 	b.hi	2f
++-	ldr	x2, [x1]
++-	add	x0, x0, x2, lsl #4
++-	ldr	x0, [x0]
+++	ldr	PTR_REG (2), [x1]
+++	add	PTR_REG (0), PTR_REG (0), PTR_REG (2), lsl #(PTR_LOG_SIZE + 1)
+++	ldr	PTR_REG (0), [x0]
++ 	cmn	x0, #0x1
++ 	b.eq	2f
++-	ldr	x1, [x1,#8]
++-	add	x0, x0, x1
++-	sub	x0, x0, x4
+++	ldr	PTR_REG (1), [x1,#(PTR_SIZE * 2)]
+++	add	PTR_REG (0), PTR_REG (0), PTR_REG (1)
+++	sub	PTR_REG (0), PTR_REG (0), PTR_REG (4)
++ 1:
++ 	ldp	 x1,  x2, [sp, #32+16*0]
++ 	ldp	 x3,  x4, [sp, #32+16*1]
++@@ -233,7 +233,7 @@ _dl_tlsdesc_dynamic:
++ 	bl	__tls_get_addr
++ 
++ 	mrs	x1, tpidr_el0
++-	sub	x0, x0, x1
+++	sub	PTR_REG (0), PTR_REG (0), PTR_REG (1)
++ 
++ 	RESTORE_Q_REGISTERS
++ 
++@@ -279,13 +279,13 @@ _dl_tlsdesc_resolve_rela:
++ 
++ 	SAVE_Q_REGISTERS
++ 
++-	ldr	x1, [x3, #8]
+++	ldr	PTR_REG (1), [x3, #PTR_SIZE]
++ 	bl	_dl_tlsdesc_resolve_rela_fixup
++ 
++ 	RESTORE_Q_REGISTERS
++ 
++ 	ldr	x0, [sp, #32+16*8]
++-	ldr	x1, [x0]
+++	ldr	PTR_REG (1), [x0]
++ 	blr	x1
++ 
++ 	ldp	 x1,  x4, [sp, #32+16*0]
++@@ -346,7 +346,7 @@ _dl_tlsdesc_resolve_hold:
++ 	RESTORE_Q_REGISTERS
++ 
++ 	ldr	x0, [sp, #32+16*9]
++-	ldr	x1, [x0]
+++	ldr	PTR_REG (1), [x0]
++ 	blr	x1
++ 
++ 	ldp	 x1,  x2, [sp, #32+16*0]
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0007-Use-PTR_-macros-in-dl-trampoline.S.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0007-Use-PTR_-macros-in-dl-trampoline.S.patch
+new file mode 100644
+index 0000000..1f2d6d5
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0007-Use-PTR_-macros-in-dl-trampoline.S.patch
+@@ -0,0 +1,96 @@
++From 0360041136e6ecac72e41d951ede13a623479ce9 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:51 +0300
++Subject: [PATCH 07/27] Use PTR_* macros in dl-trampoline.S
++
++Use the PTR_* macros in dl-trampoline.S so it can be used for
++both ILP32 and LP64.  Also add a comment about what was an magic number
++(the size of the rela relocation entries).
++
++* sysdeps/aarch64/dl-trampoline.S (ip0l): New define.
++(RELA_SIZE): New define.
++(_dl_runtime_resolve): Use PTR_REG, PTR_SIZE.
++(_dl_runtime_profile): Likewise.  Use RELA_SIZE and ip0l.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/dl-trampoline.S | 18 +++++++++++-------
++ 1 file changed, 11 insertions(+), 7 deletions(-)
++
++diff --git a/sysdeps/aarch64/dl-trampoline.S b/sysdeps/aarch64/dl-trampoline.S
++index 947a515..63ef6f7 100644
++--- a/sysdeps/aarch64/dl-trampoline.S
+++++ b/sysdeps/aarch64/dl-trampoline.S
++@@ -22,9 +22,13 @@
++ #include "dl-link.h"
++ 
++ #define ip0 x16
+++#define ip0l PTR_REG (16)
++ #define ip1 x17
++ #define lr  x30
++ 
+++/* RELA relocatons are 3 pointers */
+++#define RELA_SIZE (PTR_SIZE * 3)
+++
++ 	.text
++ 	.globl _dl_runtime_resolve
++ 	.type _dl_runtime_resolve, #function
++@@ -79,7 +83,7 @@ _dl_runtime_resolve:
++ 	cfi_rel_offset (q1, 80+7*16)
++ 
++ 	/* Get pointer to linker struct.  */
++-	ldr	x0, [ip0, #-8]
+++	ldr	PTR_REG (0), [ip0, #-PTR_SIZE]
++ 
++ 	/* Prepare to call _dl_fixup().  */
++ 	ldr	x1, [sp, 80+8*16]	/* Recover &PLTGOT[n] */
++@@ -87,7 +91,7 @@ _dl_runtime_resolve:
++ 	sub     x1, x1, ip0
++ 	add     x1, x1, x1, lsl #1
++ 	lsl     x1, x1, #3
++-	sub     x1, x1, #192
+++	sub     x1, x1, #(RELA_SIZE<<3)
++ 	lsr     x1, x1, #3
++ 
++ 	/* Call fixup routine.  */
++@@ -191,7 +195,7 @@ _dl_runtime_profile:
++ 	stp	x0, x1, [x29, #OFFSET_RG + DL_OFFSET_RG_SP]
++ 
++ 	/* Get pointer to linker struct.  */
++-	ldr	x0, [ip0, #-8]
+++	ldr	PTR_REG (0), [ip0, #-PTR_SIZE]
++ 
++ 	/* Prepare to call _dl_profile_fixup().  */
++ 	ldr	x1, [x29, OFFSET_PLTGOTN]	/* Recover &PLTGOT[n] */
++@@ -199,7 +203,7 @@ _dl_runtime_profile:
++ 	sub     x1, x1, ip0
++ 	add     x1, x1, x1, lsl #1
++ 	lsl     x1, x1, #3
++-	sub     x1, x1, #192
+++	sub     x1, x1, #(RELA_SIZE<<3)
++ 	lsr     x1, x1, #3
++ 
++ 	stp	x0, x1, [x29, #OFFSET_SAVED_CALL_X0]
++@@ -210,8 +214,8 @@ _dl_runtime_profile:
++ 	add	x4, x29, #OFFSET_FS		/* address of framesize */
++ 	bl	_dl_profile_fixup
++ 
++-	ldr	ip0, [x29, #OFFSET_FS]		/* framesize == 0 */
++-	cmp	ip0, #0
+++	ldr	ip0l, [x29, #OFFSET_FS]		/* framesize == 0 */
+++	cmp	ip0l, #0
++ 	bge	1f
++ 	cfi_remember_state
++ 
++@@ -243,7 +247,7 @@ _dl_runtime_profile:
++ 1:
++ 	/* The new frame size is in ip0.  */
++ 
++-	sub	x1, x29, ip0
+++	sub	PTR_REG (1), PTR_REG (29), ip0l
++ 	and	sp, x1, #0xfffffffffffffff0
++ 
++ 	str	x0, [x29, #OFFSET_T1]
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0008-Use-PTR_-in-start.S.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0008-Use-PTR_-in-start.S.patch
+new file mode 100644
+index 0000000..53ea382
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0008-Use-PTR_-in-start.S.patch
+@@ -0,0 +1,77 @@
++From e62d06a2b272d10887dfd4d3b1c15bba98e27fb7 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:52 +0300
++Subject: [PATCH 08/27] Use PTR_* in start.S
++
++To support ILP32 without much sources changes, this changes
++sysdeps/aarch64/start.S to use the PTR_* macros which was defined
++earlier.
++
++* sysdeps/aarch64/start.S: Include sysdep.h
++(_start): Use PTR_REG, PTR_SIZE macros.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/start.S | 20 +++++++++++---------
++ 1 file changed, 11 insertions(+), 9 deletions(-)
++
++diff --git a/sysdeps/aarch64/start.S b/sysdeps/aarch64/start.S
++index efe2474..9198c57 100644
++--- a/sysdeps/aarch64/start.S
+++++ b/sysdeps/aarch64/start.S
++@@ -16,6 +16,8 @@
++    License along with the GNU C Library.  If not, see
++    <http://www.gnu.org/licenses/>.  */
++ 
+++#include <sysdep.h>
+++
++ /* This is the canonical entry point, usually the first thing in the text
++    segment.
++ 
++@@ -25,7 +27,7 @@
++ 
++    At this entry point, most registers' values are unspecified, except:
++ 
++-   x0		Contains a function pointer to be registered with `atexit'.
+++   x0/w0	Contains a function pointer to be registered with `atexit'.
++ 		This is how the dynamic linker arranges to have DT_FINI
++ 		functions called for shared libraries that have been loaded
++ 		before this code runs.
++@@ -52,26 +54,26 @@ _start:
++ 	mov	x5, x0
++ 
++ 	/* Load argc and a pointer to argv */
++-	ldr	x1, [sp, #0]
++-	add	x2, sp, #8
+++	ldr	PTR_REG (1), [sp, #0]
+++	add	x2, sp, #PTR_SIZE
++ 
++ 	/* Setup stack limit in argument register */
++ 	mov	x6, sp
++ 
++ #ifdef SHARED
++         adrp    x0, :got:main
++-	ldr     x0, [x0, #:got_lo12:main]
+++	ldr     PTR_REG (0), [x0, #:got_lo12:main]
++ 
++         adrp    x3, :got:__libc_csu_init
++-	ldr     x3, [x3, #:got_lo12:__libc_csu_init]
+++	ldr     PTR_REG (3), [x3, #:got_lo12:__libc_csu_init]
++ 
++         adrp    x4, :got:__libc_csu_fini
++-	ldr     x4, [x4, #:got_lo12:__libc_csu_fini]
+++	ldr     PTR_REG (4), [x4, #:got_lo12:__libc_csu_fini]
++ #else
++ 	/* Set up the other arguments in registers */
++-	ldr	x0, =main
++-	ldr	x3, =__libc_csu_init
++-	ldr	x4, =__libc_csu_fini
+++	ldr	PTR_REG (0), =main
+++	ldr	PTR_REG (3), =__libc_csu_init
+++	ldr	PTR_REG (4), =__libc_csu_fini
++ #endif
++ 
++ 	/* __libc_start_main (main, argc, argv, init, fini, rtld_fini,
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0009-Use-PTR_REG-in-getcontext.S.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0009-Use-PTR_REG-in-getcontext.S.patch
+new file mode 100644
+index 0000000..2009d80
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0009-Use-PTR_REG-in-getcontext.S.patch
+@@ -0,0 +1,32 @@
++From 3459f923aa1eb2a21ed28ca804051359bdc1750e Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:53 +0300
++Subject: [PATCH 09/27] Use PTR_REG in getcontext.S.
++
++Just like the other patches, this patch allows for getcontext.S to be used
++between ILP32 and LP64.
++
++* sysdeps/unix/sysv/linux/aarch64/getcontext.S: Use PTR_REG when
++doing an add so wrapping of the pointer is correct for ILP32.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/getcontext.S | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/getcontext.S b/sysdeps/unix/sysv/linux/aarch64/getcontext.S
++index c2dd5b8..71e526c 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/getcontext.S
+++++ b/sysdeps/unix/sysv/linux/aarch64/getcontext.S
++@@ -90,7 +90,7 @@ ENTRY(__getcontext)
++ 
++ 	/* Grab the signal mask */
++ 	/* rt_sigprocmask (SIG_BLOCK, NULL, &ucp->uc_sigmask, _NSIG8) */
++-	add	x2, x0, #UCONTEXT_SIGMASK
+++	add	PTR_REG (2), PTR_REG (0), #UCONTEXT_SIGMASK
++ 	mov	x0, SIG_BLOCK
++ 	mov	x1, 0
++ 	mov	x3, _NSIG8
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0010-Detect-ILP32-in-configure-scripts.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0010-Detect-ILP32-in-configure-scripts.patch
+new file mode 100644
+index 0000000..a98b9c1
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0010-Detect-ILP32-in-configure-scripts.patch
+@@ -0,0 +1,165 @@
++From 224f4fd270b149da818fdb77e47f7fe542e6d91c Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:54 +0300
++Subject: [PATCH 10/27] Detect ILP32 in configure scripts.
++
++This adds detecting of ILP32 to the configure scripts.
++Adding to preconfigure detection of ilp32 in preconfigure and then writing out the default-abi in configure.
++
++* sysdeps/aarch64/preconfigure: Detect ILP32 and set aarch64_config_abi
++to ilp32 for ilp32 and lp64 for lp64.  Set machine to either
++aarch64/ilp32 or aarch64/lp64 depending on the ABI that is selected.
++* sysdeps/aarch64/configure.ac: Define HAVE_AARCH64_ILP32 if this is ILP32.
++Set the default-abi to either ilp32, lp64, ilp32_be or lp64_be depending
++on the ABI.
++* sysdeps/aarch64/configure: Regenerate.
++* sysdeps/unix/sysv/linux/aarch64/configure.ac: Set arch_minimum_kernel
++to 3.19.0 for ILP32.
++Set LIBC_SLIBDIR_RTLDDIR to libilp32/lib for ilp32.
++* sysdeps/unix/sysv/linux/aarch64/configure: Regenerate.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/configure                    | 15 +++++++++++----
++ sysdeps/aarch64/configure.ac                 | 11 +++++++++--
++ sysdeps/aarch64/preconfigure                 | 11 ++++++++++-
++ sysdeps/unix/sysv/linux/aarch64/configure    | 22 +++++++++++++++++++---
++ sysdeps/unix/sysv/linux/aarch64/configure.ac |  9 +++++++--
++ 5 files changed, 56 insertions(+), 12 deletions(-)
++ mode change 100644 => 100755 sysdeps/aarch64/configure
++ mode change 100644 => 100755 sysdeps/unix/sysv/linux/aarch64/configure
++
++diff --git a/sysdeps/aarch64/configure b/sysdeps/aarch64/configure
++old mode 100644
++new mode 100755
++index 5bd355a..7dd56e8
++--- a/sysdeps/aarch64/configure
+++++ b/sysdeps/aarch64/configure
++@@ -163,12 +163,19 @@ rm -f conftest*
++ fi
++ { $as_echo "$as_me:${as_lineno-$LINENO}: result: $libc_cv_aarch64_be" >&5
++ $as_echo "$libc_cv_aarch64_be" >&6; }
+++
+++if test $aarch64_config_abi = ilp32; then
+++  $as_echo "#define HAVE_AARCH64_ILP32 1" >>confdefs.h
+++
+++fi
+++
++ if test $libc_cv_aarch64_be = yes; then
++   $as_echo "#define HAVE_AARCH64_BE 1" >>confdefs.h
++ 
++-  config_vars="$config_vars
++-default-abi = lp64_be"
+++  libc_aarch64_be=_be
++ else
++-  config_vars="$config_vars
++-default-abi = lp64"
+++  libc_aarch64_be=
++ fi
+++
+++config_vars="$config_vars
+++default-abi = ${aarch64_config_abi}${libc_aarch64_be}"
++diff --git a/sysdeps/aarch64/configure.ac b/sysdeps/aarch64/configure.ac
++index 7851dd4..9069325 100644
++--- a/sysdeps/aarch64/configure.ac
+++++ b/sysdeps/aarch64/configure.ac
++@@ -14,9 +14,16 @@ AC_CACHE_CHECK([for big endian],
++                       yes
++                      #endif
++   ], libc_cv_aarch64_be=yes, libc_cv_aarch64_be=no)])
+++
+++if test $aarch64_config_abi = ilp32; then
+++  AC_DEFINE(HAVE_AARCH64_ILP32)
+++fi
+++
++ if test $libc_cv_aarch64_be = yes; then
++   AC_DEFINE(HAVE_AARCH64_BE)
++-  LIBC_CONFIG_VAR([default-abi], [lp64_be])
+++  libc_aarch64_be=_be
++ else
++-  LIBC_CONFIG_VAR([default-abi], [lp64])
+++  libc_aarch64_be=
++ fi
+++
+++LIBC_CONFIG_VAR([default-abi], [${aarch64_config_abi}${libc_aarch64_be}])
++diff --git a/sysdeps/aarch64/preconfigure b/sysdeps/aarch64/preconfigure
++index d9bd1f8..4bcd8e3 100644
++--- a/sysdeps/aarch64/preconfigure
+++++ b/sysdeps/aarch64/preconfigure
++@@ -1,6 +1,15 @@
++ case "$machine" in
++ aarch64*)
++ 	base_machine=aarch64
++-	machine=aarch64
+++	case "$CC $CFLAGS $CPPFLAGS " in
+++		*" -mabi=ilp32 "*) aarch64_config_abi=ilp32 ;;
+++		*" -mabi=lp64 "*) aarch64_config_abi=lp64 ;;
+++		*) aarch64_config_abi=default ;;
+++	esac
+++	case $aarch64_config_abi in
+++		default) machine=aarch64/lp64 aarch64_config_abi=lp64 ;;
+++		ilp32) machine=aarch64/ilp32 ;;
+++		lp64) machine=aarch64/lp64 ;;
+++	esac
++ 	;;
++ esac
++diff --git a/sysdeps/unix/sysv/linux/aarch64/configure b/sysdeps/unix/sysv/linux/aarch64/configure
++old mode 100644
++new mode 100755
++index f48472c..2563e83
++--- a/sysdeps/unix/sysv/linux/aarch64/configure
+++++ b/sysdeps/unix/sysv/linux/aarch64/configure
++@@ -1,9 +1,23 @@
++ # This file is generated from configure.ac by Autoconf.  DO NOT EDIT!
++  # Local configure fragment for sysdeps/unix/sysv/linux/aarch64.
++ 
++-arch_minimum_kernel=3.7.0
++-
++-test -n "$libc_cv_slibdir" ||
+++if test $aarch64_config_abi = ilp32; then
+++  arch_minimum_kernel=3.19.0
+++  test -n "$libc_cv_slibdir" ||
+++case "$prefix" in
+++/usr | /usr/)
+++  libc_cv_slibdir=/libilp32
+++  libc_cv_rtlddir=/lib
+++  if test "$libdir" = '${exec_prefix}/lib'; then
+++    libdir='${exec_prefix}/libilp32';
+++    # Locale data can be shared between 32-bit and 64-bit libraries.
+++    libc_cv_localedir='${exec_prefix}/lib/locale'
+++  fi
+++  ;;
+++esac
+++else
+++  arch_minimum_kernel=3.7.0
+++  test -n "$libc_cv_slibdir" ||
++ case "$prefix" in
++ /usr | /usr/)
++   libc_cv_slibdir=/lib64
++@@ -15,3 +29,5 @@ case "$prefix" in
++   fi
++   ;;
++ esac
+++fi
+++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/configure.ac b/sysdeps/unix/sysv/linux/aarch64/configure.ac
++index 211fa9c..6526816 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/configure.ac
+++++ b/sysdeps/unix/sysv/linux/aarch64/configure.ac
++@@ -1,6 +1,11 @@
++ GLIBC_PROVIDES dnl See aclocal.m4 in the top level source directory.
++ # Local configure fragment for sysdeps/unix/sysv/linux/aarch64.
++ 
++-arch_minimum_kernel=3.7.0
+++if test $aarch64_config_abi = ilp32; then
+++  arch_minimum_kernel=3.19.0
+++  LIBC_SLIBDIR_RTLDDIR([libilp32], [lib])
+++else
+++  arch_minimum_kernel=3.7.0
+++  LIBC_SLIBDIR_RTLDDIR([lib64], [lib])
+++fi
++ 
++-LIBC_SLIBDIR_RTLDDIR([lib64], [lib])
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0011-Syscalls-for-ILP32-are-passed-always-via-64bit-value.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0011-Syscalls-for-ILP32-are-passed-always-via-64bit-value.patch
+new file mode 100644
+index 0000000..47ade08
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0011-Syscalls-for-ILP32-are-passed-always-via-64bit-value.patch
+@@ -0,0 +1,129 @@
++From c34702d77226cb554162120dcf645b4d27210860 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:55 +0300
++Subject: [PATCH 11/27] Syscalls for ILP32 are passed always via 64bit values.
++
++This patch adds support for ILP32 syscalls, sign and zero extending
++where needed.  Unlike LP64, pointers are 32bit and need to be zero
++extended rather than the standard sign extend that the code would do.
++We take advatage of ssize_t being long rather than int for ILP32,
++to get this correct.
++
++* sysdeps/unix/sysv/linux/aarch64/sysdep.h
++(INLINE_VSYSCALL): Use long long instead of long.
++(INTERNAL_VSYSCALL): Likewise.
++(INLINE_SYSCALL): Likewise.
++(INTERNAL_SYSCALL_RAW): Likewise.
++(ARGIFY): New macro.
++(LOAD_ARGS_0): Use long long instead of long.
++(LOAD_ARGS_1): Use long long instead of long
++and use ARGIFY.
++(LOAD_ARGS_2): Likewise.
++(LOAD_ARGS_3): Likewise.
++(LOAD_ARGS_4): Likewise.
++(LOAD_ARGS_5): Likewise.
++(LOAD_ARGS_6): Likewise.
++(LOAD_ARGS_7): Likewise.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/sysdep.h | 48 ++++++++++++++++++++------------
++ 1 file changed, 30 insertions(+), 18 deletions(-)
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sysdep.h b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++index 1ffabc2..42f89c8 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sysdep.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++@@ -161,11 +161,11 @@
++    call.  */
++ # undef INLINE_SYSCALL
++ # define INLINE_SYSCALL(name, nr, args...)				\
++-  ({ unsigned long _sys_result = INTERNAL_SYSCALL (name, , nr, args);	\
+++  ({ unsigned long long _sys_result = INTERNAL_SYSCALL (name, , nr, args);	\
++      if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_sys_result, ), 0))\
++        {								\
++ 	 __set_errno (INTERNAL_SYSCALL_ERRNO (_sys_result, ));		\
++-	 _sys_result = (unsigned long) -1;				\
+++	 _sys_result = (unsigned long long) -1;				\
++        }								\
++      (long) _sys_result; })
++ 
++@@ -174,10 +174,10 @@
++ 
++ # undef INTERNAL_SYSCALL_RAW
++ # define INTERNAL_SYSCALL_RAW(name, err, nr, args...)		\
++-  ({ long _sys_result;						\
+++  ({ long long _sys_result;						\
++      {								\
++        LOAD_ARGS_##nr (args)					\
++-       register long _x8 asm ("x8") = (name);			\
+++       register long long _x8 asm ("x8") = (name);		\
++        asm volatile ("svc	0	// syscall " # name     \
++ 		     : "=r" (_x0) : "r"(_x8) ASM_ARGS_##nr : "memory");	\
++        _sys_result = _x0;					\
++@@ -199,36 +199,48 @@
++ # undef INTERNAL_SYSCALL_ERRNO
++ # define INTERNAL_SYSCALL_ERRNO(val, err)	(-(val))
++ 
+++/* Convert X to a long long, without losing any bits if it is one
+++   already or warning if it is a 32-bit pointer.  This zero extends
+++   32-bit pointers and sign extends other signed types.  Note this only
+++   works because ssize_t is long and short-short is promoted to int.   */
+++#define ARGIFY(X)											\
+++       ((unsigned long long) 										\
+++         __builtin_choose_expr(__builtin_types_compatible_p(__typeof__(X), __typeof__((X) - (X))),	\
+++                               (X),									\
+++           __builtin_choose_expr(__builtin_types_compatible_p(int, __typeof__((X) - (X))), 		\
+++                                 (X),									\
+++                                 (unsigned long)(X))))
+++
++ # define LOAD_ARGS_0()				\
++-  register long _x0 asm ("x0");
+++  register long long _x0 asm ("x0");
++ # define LOAD_ARGS_1(x0)			\
++-  long _x0tmp = (long) (x0);			\
+++  long long _x0tmp = ARGIFY (x0);		\
++   LOAD_ARGS_0 ()				\
++   _x0 = _x0tmp;
++ # define LOAD_ARGS_2(x0, x1)			\
++-  long _x1tmp = (long) (x1);			\
+++  long long _x1tmp = ARGIFY (x1);		\
++   LOAD_ARGS_1 (x0)				\
++-  register long _x1 asm ("x1") = _x1tmp;
+++  register long long _x1 asm ("x1") = _x1tmp;
++ # define LOAD_ARGS_3(x0, x1, x2)		\
++-  long _x2tmp = (long) (x2);			\
+++  long long _x2tmp = ARGIFY (x2);		\
++   LOAD_ARGS_2 (x0, x1)				\
++-  register long _x2 asm ("x2") = _x2tmp;
+++  register long long _x2 asm ("x2") = _x2tmp;
++ # define LOAD_ARGS_4(x0, x1, x2, x3)		\
++-  long _x3tmp = (long) (x3);			\
+++  long long _x3tmp = ARGIFY (x3);		\
++   LOAD_ARGS_3 (x0, x1, x2)			\
++-  register long _x3 asm ("x3") = _x3tmp;
+++  register long long _x3 asm ("x3") = _x3tmp;
++ # define LOAD_ARGS_5(x0, x1, x2, x3, x4)	\
++-  long _x4tmp = (long) (x4);			\
+++  long long _x4tmp = ARGIFY (x4);		\
++   LOAD_ARGS_4 (x0, x1, x2, x3)			\
++-  register long _x4 asm ("x4") = _x4tmp;
+++  register long long _x4 asm ("x4") = _x4tmp;
++ # define LOAD_ARGS_6(x0, x1, x2, x3, x4, x5)	\
++-  long _x5tmp = (long) (x5);			\
+++  long long _x5tmp = ARGIFY (x5);		\
++   LOAD_ARGS_5 (x0, x1, x2, x3, x4)		\
++-  register long _x5 asm ("x5") = _x5tmp;
+++  register long long _x5 asm ("x5") = _x5tmp;
++ # define LOAD_ARGS_7(x0, x1, x2, x3, x4, x5, x6)\
++-  long _x6tmp = (long) (x6);			\
+++  long long _x6tmp = ARGIFY (x6);		\
++   LOAD_ARGS_6 (x0, x1, x2, x3, x4, x5)		\
++-  register long _x6 asm ("x6") = _x6tmp;
+++  register long long _x6 asm ("x6") = _x6tmp;
++ 
++ # define ASM_ARGS_0
++ # define ASM_ARGS_1	, "r" (_x0)
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0012-Add-ILP32-support-to-elf_machine_load_address.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0012-Add-ILP32-support-to-elf_machine_load_address.patch
+new file mode 100644
+index 0000000..e404014
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0012-Add-ILP32-support-to-elf_machine_load_address.patch
+@@ -0,0 +1,62 @@
++From 849ac52c7ce65b07017761f64349e9f165076fd3 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:56 +0300
++Subject: [PATCH 12/27] Add ILP32 support to elf_machine_load_address.
++
++This adds ILP32 support to elf_machine_load_address.
++Since elf_machine_load_address depends on the static address being
++found without relocations, we need to use 16bit relocation which gets
++resolved at link time for ILP32.  This is just like how the 32bit
++relocation gets resolved at link time for LP64.
++
++* sysdeps/aarch64/dl-machine.h (elf_machine_load_address): Add support
++for ILP32.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/dl-machine.h | 18 ++++++++++++++++--
++ 1 file changed, 16 insertions(+), 2 deletions(-)
++
++diff --git a/sysdeps/aarch64/dl-machine.h b/sysdeps/aarch64/dl-machine.h
++index 7a49852..771b0c6 100644
++--- a/sysdeps/aarch64/dl-machine.h
+++++ b/sysdeps/aarch64/dl-machine.h
++@@ -54,19 +54,33 @@ elf_machine_load_address (void)
++      by constructing a non GOT reference to the symbol, the dynamic
++      address of the symbol we compute using adrp/add to compute the
++      symbol's address relative to the PC.
++-     This depends on 32bit relocations being resolved at link time
++-     and that the static address fits in the 32bits.  */
+++     This depends on 32/16bit relocations being resolved at link time
+++     and that the static address fits in the 32/16 bits.  */
++ 
++   ElfW(Addr) static_addr;
++   ElfW(Addr) dynamic_addr;
++ 
++   asm ("					\n"
++ "	adrp	%1, _dl_start;			\n"
+++#ifdef __LP64__
++ "	add	%1, %1, #:lo12:_dl_start	\n"
+++#else
+++"	add	%w1, %w1, #:lo12:_dl_start	\n"
+++#endif
++ "	ldr	%w0, 1f				\n"
++ "	b	2f				\n"
++ "1:						\n"
+++#ifdef __LP64__
++ "	.word	_dl_start			\n"
+++#else
+++# ifdef __AARCH64EB__
+++"	.short  0                               \n"
+++# endif
+++"	.short  _dl_start                       \n"
+++# ifndef __AARCH64EB__
+++"	.short  0                               \n"
+++# endif
+++#endif
++ "2:						\n"
++     : "=r" (static_addr),  "=r" (dynamic_addr));
++   return dynamic_addr - static_addr;
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0013-Set-up-wordsize-for-ILP32.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0013-Set-up-wordsize-for-ILP32.patch
+new file mode 100644
+index 0000000..8f8bfe9
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0013-Set-up-wordsize-for-ILP32.patch
+@@ -0,0 +1,42 @@
++From fd63da0c22a451ad3327729da56692871c40ecdf Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:57 +0300
++Subject: [PATCH 13/27] Set up wordsize for ILP32.
++
++__WORDSIZE needs to be set to 32 for ILP32.
++
++* sysdeps/aarch64/bits/wordsize.h (__WORDSIZE): Set to 32 for ILP32.
++Update comments.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/bits/wordsize.h | 10 +++++++---
++ 1 file changed, 7 insertions(+), 3 deletions(-)
++
++diff --git a/sysdeps/aarch64/bits/wordsize.h b/sysdeps/aarch64/bits/wordsize.h
++index 3ecccaa..3d5a79d 100644
++--- a/sysdeps/aarch64/bits/wordsize.h
+++++ b/sysdeps/aarch64/bits/wordsize.h
++@@ -15,12 +15,16 @@
++    License along with the GNU C Library; if not, see
++    <http://www.gnu.org/licenses/>.  */
++ 
++-#define __WORDSIZE	64
+++#ifdef __LP64__
+++# define __WORDSIZE	64
+++#else
+++# define __WORDSIZE	32
+++#endif
++ 
++-/* LP64 ABI has a 64bit time_t.
+++/* LP64 and ILP32s ABI uses a 64bit time_t.
++    This allows aarch32 and AARCH64 applications
++    both access utmp. */
++ #define __WORDSIZE_TIME64_COMPAT32	1
++ 
++-/* LP64 use the 64bit system call interface. */
+++/* LP64 and ILP32 use the 64bit system call interface. */
++ #define __SYSCALL_WORDSIZE 64
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0014-Add-ILP32-to-makefiles.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0014-Add-ILP32-to-makefiles.patch
+new file mode 100644
+index 0000000..f553ca0
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0014-Add-ILP32-to-makefiles.patch
+@@ -0,0 +1,57 @@
++From f2cf3a262851a492f585ef3f6666cf4fd97e4f02 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:58 +0300
++Subject: [PATCH 14/27] Add ILP32 to makefiles
++
++This patch adds ilp32 and ilp32_be as abi variants to the aarch64 linux
++makefile.
++
++* sysdeps/unix/sysv/linux/aarch64/Makefile (abi-variants): Add ilp32
++and ilp32_be.
++(abi-lp64-options): Add defining of LP64 and undef of ILP32 macros.
++(abi-lp64-condition): Check word size macro also.
++(abi-lp64_be-options): Add defining of LP64 and undef of ILP32 macros.
++(abi-lp64_be-condition): Check word size macro also.
++(abi-ilp32-options): Define.
++(abi-ilp32-condition): Likewise.
++(abi-ilp32_be-options): Define.
++(abi-ilp32_be-condition): Likewise.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/Makefile | 16 ++++++++++++----
++ 1 file changed, 12 insertions(+), 4 deletions(-)
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/Makefile b/sysdeps/unix/sysv/linux/aarch64/Makefile
++index 6b4e620..67619f5 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/Makefile
+++++ b/sysdeps/unix/sysv/linux/aarch64/Makefile
++@@ -23,13 +23,21 @@ endif
++ 
++ abi-variants := lp64
++ abi-variants += lp64_be
+++abi-variants += ilp32
+++abi-variants += ilp32_be
++ 
++ ifeq (,$(filter $(default-abi),$(abi-variants)))
++ Unknown ABI, must be one of $(abi-variants)
++ endif
++ 
++-abi-lp64-options := -U__AARCH64EB__
++-abi-lp64-condition := !defined __AARCH64EB__
+++abi-lp64-options := -U__AARCH64EB__ -D__LP64__ -U__ILP32__
+++abi-lp64-condition := __WORDSIZE == 64 && !defined __AARCH64EB__
++ 
++-abi-lp64_be-options := -D__AARCH64EB__
++-abi-lp64_be-condition := defined __AARCH64EB__
+++abi-lp64_be-options := -D__AARCH64EB__ -D__LP64__ -U__ILP32__
+++abi-lp64_be-condition := __WORDSIZE == 64 && defined __AARCH64EB__
+++
+++abi-ilp32-options := -U__AARCH64EB__ -U__LP64__ -D__ILP32__
+++abi-ilp32-condition := __WORDSIZE == 32 && !defined __AARCH64EB__
+++
+++abi-ilp32_be-options := -D__AARCH64EB__ -U__LP64__ -D__ILP32__
+++abi-ilp32_be-condition := __WORDSIZE == 32 && defined __AARCH64EB__
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0015-Add-support-to-ldconfig-for-ILP32-and-libilp32.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0015-Add-support-to-ldconfig-for-ILP32-and-libilp32.patch
+new file mode 100644
+index 0000000..a28c68f
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0015-Add-support-to-ldconfig-for-ILP32-and-libilp32.patch
+@@ -0,0 +1,110 @@
++From 935b8e82b47696e418523c893d1dcb60eb89926f Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:06:59 +0300
++Subject: [PATCH 15/27] Add support to ldconfig for ILP32 and libilp32
++
++This patch adds support to ldconfig for libilp32 which is used by
++ILP32.
++
++* sysdeps/generic/ldconfig.h (FLAG_AARCH64_LIB32): New define.
++* elf/cache.c (print_entry): Handle FLAG_AARCH64_LIB32.
++* sysdeps/unix/sysv/linux/aarch64/dl-cache.h (_DL_CACHE_DEFAULT_ID):
++Define it to be the FLAG_AARCH64_LIB32 if compiling for ILP32.
++(add_system_dir): Add libilp32 to the list of system directories.
++* sysdeps/unix/sysv/linux/arm/readelflib.c (process_elf_file):
++Handle ILP32 elf binaries.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ elf/cache.c                                |  2 ++
++ sysdeps/generic/ldconfig.h                 |  1 +
++ sysdeps/unix/sysv/linux/aarch64/dl-cache.h | 13 ++++++++++++-
++ sysdeps/unix/sysv/linux/arm/readelflib.c   |  4 +++-
++ 4 files changed, 18 insertions(+), 2 deletions(-)
++
++diff --git a/elf/cache.c b/elf/cache.c
++index fbee172..cbc6162 100644
++--- a/elf/cache.c
+++++ b/elf/cache.c
++@@ -101,6 +101,8 @@ print_entry (const char *lib, int flag, unsigned int osversion,
++     case FLAG_AARCH64_LIB64:
++       fputs (",AArch64", stdout);
++       break;
+++    case FLAG_AARCH64_LIB32:
+++      fputs (",ILP32", stdout);
++     /* Uses the ARM soft-float ABI.  */
++     case FLAG_ARM_LIBSF:
++       fputs (",soft-float", stdout);
++diff --git a/sysdeps/generic/ldconfig.h b/sysdeps/generic/ldconfig.h
++index 07600b7..8150227 100644
++--- a/sysdeps/generic/ldconfig.h
+++++ b/sysdeps/generic/ldconfig.h
++@@ -42,6 +42,7 @@
++ #define FLAG_MIPS_LIB32_NAN2008		0x0c00
++ #define FLAG_MIPS64_LIBN32_NAN2008	0x0d00
++ #define FLAG_MIPS64_LIBN64_NAN2008	0x0e00
+++#define FLAG_AARCH64_LIB32		0x0f00
++ 
++ /* Name of auxiliary cache.  */
++ #define _PATH_LDCONFIG_AUX_CACHE "/var/cache/ldconfig/aux-cache"
++diff --git a/sysdeps/unix/sysv/linux/aarch64/dl-cache.h b/sysdeps/unix/sysv/linux/aarch64/dl-cache.h
++index 9c7b271..044fdba 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/dl-cache.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/dl-cache.h
++@@ -18,7 +18,11 @@
++ 
++ #include <ldconfig.h>
++ 
+++#ifdef __LP64__
++ #define _DL_CACHE_DEFAULT_ID    (FLAG_AARCH64_LIB64 | FLAG_ELF_LIBC6)
+++#else
+++#define _DL_CACHE_DEFAULT_ID    (FLAG_AARCH64_LIB32 | FLAG_ELF_LIBC6)
+++#endif
++ 
++ #define _dl_cache_check_flags(flags)                    \
++   ((flags) == _DL_CACHE_DEFAULT_ID)
++@@ -27,18 +31,25 @@
++   do								\
++     {								\
++       size_t len = strlen (dir);				\
++-      char path[len + 3];					\
+++      char path[len + 6];					\
++       memcpy (path, dir, len + 1);				\
++       if (len >= 6 && ! memcmp (path + len - 6, "/lib64", 6))	\
++ 	{							\
++ 	  len -= 2;						\
++ 	  path[len] = '\0';					\
++ 	}							\
+++      if (len >= 9 && ! memcmp (path + len - 9, "/libilp32", 9))\
+++	{							\
+++	  len -= 5;						\
+++	  path[len] = '\0';					\
+++	}							\
++       add_dir (path);						\
++       if (len >= 4 && ! memcmp (path + len - 4, "/lib", 4))	\
++ 	{							\
++ 	  memcpy (path + len, "64", 3);				\
++ 	  add_dir (path);					\
+++	  memcpy (path + len, "ilp32", 6);			\
+++	  add_dir (path);					\
++ 	}							\
++     } while (0)
++ 
++diff --git a/sysdeps/unix/sysv/linux/arm/readelflib.c b/sysdeps/unix/sysv/linux/arm/readelflib.c
++index e6ae72e..ddbad25 100644
++--- a/sysdeps/unix/sysv/linux/arm/readelflib.c
+++++ b/sysdeps/unix/sysv/linux/arm/readelflib.c
++@@ -41,7 +41,9 @@ process_elf_file (const char *file_name, const char *lib, int *flag,
++       ret = process_elf32_file (file_name, lib, flag, osversion, soname,
++ 				file_contents, file_length);
++ 
++-      if (!ret && EF_ARM_EABI_VERSION (elf32_header->e_flags) == EF_ARM_EABI_VER5)
+++      if (!ret && elf_header->e_machine == EM_AARCH64)
+++	*flag = FLAG_AARCH64_LIB32|FLAG_ELF_LIBC6;
+++      else if (!ret && EF_ARM_EABI_VERSION (elf32_header->e_flags) == EF_ARM_EABI_VER5)
++ 	{
++ 	  if (elf32_header->e_flags & EF_ARM_ABI_FLOAT_HARD)
++ 	    *flag = FLAG_ARM_LIBHF|FLAG_ELF_LIBC6;
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0016-Add-ILP32-ld.so-to-the-known-interpreter-names.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0016-Add-ILP32-ld.so-to-the-known-interpreter-names.patch
+new file mode 100644
+index 0000000..778e8e5
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0016-Add-ILP32-ld.so-to-the-known-interpreter-names.patch
+@@ -0,0 +1,31 @@
++From d8b88868963aa0a486801a3c20feba40379058d5 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:00 +0300
++Subject: [PATCH 16/27] Add ILP32 ld.so to the known interpreter names.
++
++This patch adds ILP32 ld.so names to the known interpreter names.
++
++* sysdeps/unix/sysv/linux/aarch64/ldconfig.h (SYSDEP_KNOWN_INTERPRETER_NAMES):
++Add ilp32 ld.so names.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/ldconfig.h | 2 ++
++ 1 file changed, 2 insertions(+)
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ldconfig.h b/sysdeps/unix/sysv/linux/aarch64/ldconfig.h
++index ee91ef8..ac84194 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ldconfig.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/ldconfig.h
++@@ -21,6 +21,8 @@
++ #define SYSDEP_KNOWN_INTERPRETER_NAMES \
++   { "/lib/ld-linux-aarch64.so.1", FLAG_ELF_LIBC6 }, \
++   { "/lib/ld-linux-aarch64_be.so.1", FLAG_ELF_LIBC6 }, \
+++  { "/lib/ld-linux-aarch64_ilp32.so.1", FLAG_ELF_LIBC6 }, \
+++  { "/lib/ld-linux-aarch64_be_ilp32.so.1", FLAG_ELF_LIBC6 }, \
++   { "/lib/ld-linux.so.3", FLAG_ELF_LIBC6 }, \
++   { "/lib/ld-linux-armhf.so.3", FLAG_ELF_LIBC6 },
++ #define SYSDEP_KNOWN_LIBRARY_NAMES \
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0017-Add-ldd-rewrite.sed-so-that-ilp32-ld.so-can-be-found.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0017-Add-ldd-rewrite.sed-so-that-ilp32-ld.so-can-be-found.patch
+new file mode 100644
+index 0000000..b9721e7
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0017-Add-ldd-rewrite.sed-so-that-ilp32-ld.so-can-be-found.patch
+@@ -0,0 +1,51 @@
++From 8868c6b826373761105b613cff9cc643aa1118a1 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:01 +0300
++Subject: [PATCH 17/27] Add ldd-rewrite.sed so that ilp32 ld.so can be found
++
++To be support multi-lib with ldd, we need to add a ldd-rewrite.sed file
++to rewrite RTLDLIST to include both ld.so's.
++
++* sysdeps/unix/sysv/linux/aarch64/configure.ac (ldd_rewrite_script):
++Set.
++* sysdeps/unix/sysv/linux/aarch64/configure: Regenerate.
++* sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed: New file.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/configure       | 2 ++
++ sysdeps/unix/sysv/linux/aarch64/configure.ac    | 2 ++
++ sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed | 1 +
++ 3 files changed, 5 insertions(+)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/configure b/sysdeps/unix/sysv/linux/aarch64/configure
++index 2563e83..325422f 100755
++--- a/sysdeps/unix/sysv/linux/aarch64/configure
+++++ b/sysdeps/unix/sysv/linux/aarch64/configure
++@@ -31,3 +31,5 @@ case "$prefix" in
++ esac
++ fi
++ 
+++ldd_rewrite_script=$dir/ldd-rewrite.sed
+++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/configure.ac b/sysdeps/unix/sysv/linux/aarch64/configure.ac
++index 6526816..3ca8ed1 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/configure.ac
+++++ b/sysdeps/unix/sysv/linux/aarch64/configure.ac
++@@ -9,3 +9,5 @@ else
++   LIBC_SLIBDIR_RTLDDIR([lib64], [lib])
++ fi
++ 
+++ldd_rewrite_script=$dir/ldd-rewrite.sed
+++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed b/sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed
++new file mode 100644
++index 0000000..2f3bbb9
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ldd-rewrite.sed
++@@ -0,0 +1 @@
+++s_^\(RTLDLIST=\)\(.*lib/\)\([^/]*\)\(-aarch64\)\(\|\_be\)\(\|\_ilp32\)\(.so\.[0-9.]*\)$_\1"\2\3-aarch64\5\7 \2\3-aarch64\5\_ilp32\7"_
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0018-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0018-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch
+new file mode 100644
+index 0000000..d67d574
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0018-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch
+@@ -0,0 +1,80 @@
++From 547f9e31afe462990b3cf1ca1ca8cfa72c5deca2 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:02 +0300
++Subject: [PATCH 18/27] Add kernel_sigaction.h for AARCH64 ILP32
++
++In ILP32, the sigaction struct is the same as AARCH64 so we need
++the header file kernel_sigaction.h.  To allow for this to work,
++we use a long long fields and then add extra casts when converting
++between the user exposed struct and the kernel exposed struct.
++
++* sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h: New file.
++* sysdeps/unix/sysv/linux/aarch64/sigaction.c (__libc_sigaction):
++Add cast here it is necessary.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h | 12 ++++++++++++
++ sysdeps/unix/sysv/linux/aarch64/sigaction.c        | 10 ++++++----
++ 2 files changed, 18 insertions(+), 4 deletions(-)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h b/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
++new file mode 100644
++index 0000000..7b3023b
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
++@@ -0,0 +1,12 @@
+++
+++#define HAVE_SA_RESTORER
+++
+++/* This is the sigaction structure in aarch64 kernel.
+++   Note the ILP32 struct uses the same struct as LP64
+++   which is why the fields are 64bit in size. */
+++struct kernel_sigaction {
+++	unsigned long long k_sa_handler;
+++	unsigned long long sa_flags;
+++	unsigned long long sa_restorer;
+++	sigset_t sa_mask;
+++};
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sigaction.c b/sysdeps/unix/sysv/linux/aarch64/sigaction.c
++index 3291924..40a327f 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sigaction.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/sigaction.c
++@@ -39,15 +39,17 @@ __libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
++ 
++   if (act)
++     {
++-      kact.k_sa_handler = act->sa_handler;
+++      kact.k_sa_handler = (unsigned long long)(uintptr_t)act->sa_handler;
++       memcpy (&kact.sa_mask, &act->sa_mask, sizeof (sigset_t));
++       kact.sa_flags = act->sa_flags;
++ #ifdef HAVE_SA_RESTORER
++       if (kact.sa_flags & SA_RESTORER)
++-	kact.sa_restorer = act->sa_restorer;
+++	kact.sa_restorer = (unsigned long long)(uintptr_t)act->sa_restorer;
++ #endif
++     }
++ 
+++  /* This is needed for ILP32 as the structures are two different sizes due to
+++     using the LP64 structure.  */
++   result = INLINE_SYSCALL (rt_sigaction, 4, sig,
++ 			   act ? &kact : NULL,
++ 			   oact ? &koact : NULL, _NSIG / 8);
++@@ -55,11 +57,11 @@ __libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
++     {
++       if (oact && result >= 0)
++ 	{
++-	  oact->sa_handler = koact.k_sa_handler;
+++	  oact->sa_handler = (void*)(uintptr_t)koact.k_sa_handler;
++ 	  memcpy (&oact->sa_mask, &koact.sa_mask, sizeof (sigset_t));
++ 	  oact->sa_flags = koact.sa_flags;
++ #ifdef HAVE_SA_RESTORER
++-	  oact->sa_restorer = koact.sa_restorer;
+++	  oact->sa_restorer = (void*)(uintptr_t)koact.sa_restorer;
++ #endif
++ 	}
++     }
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0019-Add-typesizes.h-for-ILP32.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0019-Add-typesizes.h-for-ILP32.patch
+new file mode 100644
+index 0000000..80a92fa
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0019-Add-typesizes.h-for-ILP32.patch
+@@ -0,0 +1,129 @@
++From 05271c9b299b7e94d224f010cd3fe2d169b43d80 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:03 +0300
++Subject: [PATCH 19/27] Add typesizes.h for ILP32
++
++The generic typesizes does not work for ILP32 as the kernel long type
++needs to be long long (quad).  time_t, off_t, clock_t, suseconds_t,
++ino_t, rlim_t are 64bits.
++FDSET bitmask is a 64bit type.
++
++* sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h: New file.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h | 79 ++++++++++++++++++++++++
++ sysdeps/unix/sysv/linux/sysdep-vdso.h            |  4 +-
++ 2 files changed, 81 insertions(+), 2 deletions(-)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++new file mode 100644
++index 0000000..844da49
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++@@ -0,0 +1,79 @@
+++/* bits/typesizes.h -- underlying types for *_t.  Linux/AARCh64 version.
+++   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#ifndef _BITS_TYPES_H
+++# error "Never include <bits/typesizes.h> directly; use <sys/types.h> instead."
+++#endif
+++
+++#ifndef	_BITS_TYPESIZES_H
+++#define	_BITS_TYPESIZES_H	1
+++
+++/* See <bits/types.h> for the meaning of these macros.  This file exists so
+++   that <bits/types.h> need not vary across different GNU platforms.  */
+++
+++#define __DEV_T_TYPE		__UQUAD_TYPE
+++#define __UID_T_TYPE		__U32_TYPE
+++#define __GID_T_TYPE		__U32_TYPE
+++#define __INO_T_TYPE		__ULONGWORD_TYPE
+++#define __INO64_T_TYPE		__UQUAD_TYPE
+++#define __MODE_T_TYPE		__U32_TYPE
+++#define __NLINK_T_TYPE		__U32_TYPE
+++#define __OFF_T_TYPE		__SQUAD_TYPE
+++#define __OFF64_T_TYPE		__SQUAD_TYPE
+++#define __PID_T_TYPE		__S32_TYPE
+++#define __RLIM_T_TYPE		__ULONGWORD_TYPE
+++#define __RLIM64_T_TYPE		__UQUAD_TYPE
+++#define	__BLKCNT_T_TYPE		__SLONGWORD_TYPE
+++#define	__BLKCNT64_T_TYPE	__SQUAD_TYPE
+++#define	__FSBLKCNT_T_TYPE	__ULONGWORD_TYPE
+++#define	__FSBLKCNT64_T_TYPE	__UQUAD_TYPE
+++#define	__FSFILCNT_T_TYPE	__ULONGWORD_TYPE
+++#define	__FSFILCNT64_T_TYPE	__UQUAD_TYPE
+++#define	__FSWORD_T_TYPE		__SWORD_TYPE
+++#define	__ID_T_TYPE		__U32_TYPE
+++#define __CLOCK_T_TYPE		__SLONGWORD_TYPE
+++#define __TIME_T_TYPE		__SLONGWORD_TYPE
+++#define __USECONDS_T_TYPE	__U32_TYPE
+++#define __SUSECONDS_T_TYPE	__SLONGWORD_TYPE
+++#define __DADDR_T_TYPE		__S32_TYPE
+++#define __KEY_T_TYPE		__S32_TYPE
+++#define __CLOCKID_T_TYPE	__S32_TYPE
+++#define __TIMER_T_TYPE		void *
+++#define __BLKSIZE_T_TYPE	__S32_TYPE
+++#define __FSID_T_TYPE		struct { int __val[2]; }
+++/* ssize_t is always singed long in both ABIs. */
+++#define __SSIZE_T_TYPE		__SLONGWORD_TYPE
+++#define __SYSCALL_SLONG_TYPE	__SLONGWORD_TYPE
+++#define __SYSCALL_ULONG_TYPE	__ULONGWORD_TYPE
+++#define __CPU_MASK_TYPE         __ULONGWORD_TYPE
+++
+++#ifdef __LP64__
+++/* Tell the libc code that off_t and off64_t are actually the same type
+++   for all ABI purposes, even if possibly expressed as different base types
+++   for C type-checking purposes.  */
+++# define __OFF_T_MATCHES_OFF64_T	1
+++
+++/* Same for ino_t and ino64_t.  */
+++# define __INO_T_MATCHES_INO64_T	1
+++#endif
+++
+++/* Number of descriptors that can fit in an `fd_set'.  */
+++#define	__FD_SETSIZE		1024
+++
+++
+++#endif /* bits/typesizes.h */
++diff --git a/sysdeps/unix/sysv/linux/sysdep-vdso.h b/sysdeps/unix/sysv/linux/sysdep-vdso.h
++index e8c4a7b..351d6bb 100644
++--- a/sysdeps/unix/sysv/linux/sysdep-vdso.h
+++++ b/sysdeps/unix/sysv/linux/sysdep-vdso.h
++@@ -37,7 +37,7 @@
++     __label__ out;							      \
++     __label__ iserr;							      \
++     INTERNAL_SYSCALL_DECL (sc_err);					      \
++-    long int sc_ret;							      \
+++    __syscall_slong_t sc_ret;						      \
++ 									      \
++     __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
++     PTR_DEMANGLE (vdsop);						      \
++@@ -64,7 +64,7 @@
++ #  define INTERNAL_VSYSCALL(name, err, nr, args...)			      \
++   ({									      \
++     __label__ out;							      \
++-    long v_ret;								      \
+++    __syscall_slong_t v_ret;						      \
++ 									      \
++     __typeof (__vdso_##name) vdsop = __vdso_##name;			      \
++     PTR_DEMANGLE (vdsop);						      \
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0020-Make-lp64-and-ilp32-directories.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0020-Make-lp64-and-ilp32-directories.patch
+new file mode 100644
+index 0000000..12c5b26
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0020-Make-lp64-and-ilp32-directories.patch
+@@ -0,0 +1,714 @@
++From a3dd6046b229fb42ae1dad79a0568009d4ca74d6 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:04 +0300
++Subject: [PATCH 20/27] Make lp64 and ilp32 directories.
++
++The patch makes the ilp32 and lp64 have their own directory under aarch64.
++Since ILP32 uses most of the same system calls as LP64 and has a 64bit
++off_t, we need make the functions that end in 64 the same as the ones without.
++We also need not to special case ioctl or use the already provided mmap.c file.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/Implies                            |  6 --
++ sysdeps/aarch64/ilp32/Implies                      |  6 ++
++ sysdeps/aarch64/lp64/Implies                       |  7 ++
++ sysdeps/unix/sysv/linux/aarch64/Implies            |  2 -
++ sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h       |  6 +-
++ sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h   | 26 ++++++--
++ sysdeps/unix/sysv/linux/aarch64/ilp32/Implies      |  4 ++
++ .../unix/sysv/linux/aarch64/ilp32/dl-fxstatat64.c  |  6 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/dl-xstat64.c |  6 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/getdents.c   | 78 ++++++++++++++++++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/getdents64.c |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/lseek64.c    |  0
++ sysdeps/unix/sysv/linux/aarch64/ilp32/mmap64.c     |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/msgctl.c     | 32 +++++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/preadv.c     |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/preadv64.c   |  5 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev.c    |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev64.c  |  5 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/readdir64.c  |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/semctl.c     | 53 +++++++++++++++
++ .../unix/sysv/linux/aarch64/ilp32/shlib-versions   |  7 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/shmctl.c     | 32 +++++++++
++ .../unix/sysv/linux/aarch64/ilp32/syscalls.list    |  0
++ sysdeps/unix/sysv/linux/aarch64/ioctl.S            | 31 ---------
++ sysdeps/unix/sysv/linux/aarch64/lp64/Implies       |  4 ++
++ sysdeps/unix/sysv/linux/aarch64/lp64/ioctl.S       | 31 +++++++++
++ sysdeps/unix/sysv/linux/aarch64/lp64/mmap.c        | 34 ++++++++++
++ .../unix/sysv/linux/aarch64/lp64/shlib-versions    |  7 ++
++ sysdeps/unix/sysv/linux/aarch64/mmap.c             | 34 ----------
++ sysdeps/unix/sysv/linux/aarch64/shlib-versions     |  7 --
++ 30 files changed, 346 insertions(+), 88 deletions(-)
++ delete mode 100644 sysdeps/aarch64/Implies
++ create mode 100644 sysdeps/aarch64/ilp32/Implies
++ create mode 100644 sysdeps/aarch64/lp64/Implies
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/Implies
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/dl-fxstatat64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/dl-xstat64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/getdents.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/getdents64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/lseek64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/mmap64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/msgctl.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/preadv.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/preadv64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/readdir64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/semctl.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/shlib-versions
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/shmctl.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/syscalls.list
++ delete mode 100644 sysdeps/unix/sysv/linux/aarch64/ioctl.S
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/lp64/Implies
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/lp64/ioctl.S
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/lp64/mmap.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/lp64/shlib-versions
++ delete mode 100644 sysdeps/unix/sysv/linux/aarch64/mmap.c
++ delete mode 100644 sysdeps/unix/sysv/linux/aarch64/shlib-versions
++
++diff --git a/sysdeps/aarch64/Implies b/sysdeps/aarch64/Implies
++deleted file mode 100644
++index e5adf4d..0000000
++--- a/sysdeps/aarch64/Implies
+++++ /dev/null
++@@ -1,6 +0,0 @@
++-wordsize-64
++-ieee754/ldbl-128
++-ieee754/dbl-64/wordsize-64
++-ieee754/dbl-64
++-ieee754/flt-32
++-aarch64/soft-fp
++diff --git a/sysdeps/aarch64/ilp32/Implies b/sysdeps/aarch64/ilp32/Implies
++new file mode 100644
++index 0000000..705bc5b
++--- /dev/null
+++++ b/sysdeps/aarch64/ilp32/Implies
++@@ -0,0 +1,6 @@
+++aarch64
+++wordsize-32
+++ieee754/ldbl-128
+++ieee754/dbl-64
+++ieee754/flt-32
+++aarch64/soft-fp
++diff --git a/sysdeps/aarch64/lp64/Implies b/sysdeps/aarch64/lp64/Implies
++new file mode 100644
++index 0000000..d2fbde7
++--- /dev/null
+++++ b/sysdeps/aarch64/lp64/Implies
++@@ -0,0 +1,7 @@
+++aarch64
+++wordsize-64
+++ieee754/ldbl-128
+++ieee754/dbl-64/wordsize-64
+++ieee754/dbl-64
+++ieee754/flt-32
+++aarch64/soft-fp
++diff --git a/sysdeps/unix/sysv/linux/aarch64/Implies b/sysdeps/unix/sysv/linux/aarch64/Implies
++index 4409e19..c508f2e 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/Implies
+++++ b/sysdeps/unix/sysv/linux/aarch64/Implies
++@@ -1,3 +1 @@
++ aarch64/nptl
++-unix/sysv/linux/generic
++-unix/sysv/linux/wordsize-64
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h b/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
++index 658f696..7dcbe65 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
++@@ -25,7 +25,11 @@
++ #define __O_NOFOLLOW	0100000
++ #define __O_DIRECT	0200000
++ 
++-#define __O_LARGEFILE	0
+++#ifdef __ILP32__
+++# define __O_LARGEFILE	0400000
+++#else
+++# define __O_LARGEFILE	0
+++#endif
++ 
++ # define F_GETLK64	5
++ # define F_SETLK64	6
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++index 844da49..cd66504 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++@@ -29,7 +29,7 @@
++ #define __DEV_T_TYPE		__UQUAD_TYPE
++ #define __UID_T_TYPE		__U32_TYPE
++ #define __GID_T_TYPE		__U32_TYPE
++-#define __INO_T_TYPE		__ULONGWORD_TYPE
+++#define __INO_T_TYPE		__UQUAD_TYPE
++ #define __INO64_T_TYPE		__UQUAD_TYPE
++ #define __MODE_T_TYPE		__U32_TYPE
++ #define __NLINK_T_TYPE		__U32_TYPE
++@@ -38,11 +38,11 @@
++ #define __PID_T_TYPE		__S32_TYPE
++ #define __RLIM_T_TYPE		__ULONGWORD_TYPE
++ #define __RLIM64_T_TYPE		__UQUAD_TYPE
++-#define	__BLKCNT_T_TYPE		__SLONGWORD_TYPE
+++#define	__BLKCNT_T_TYPE		__SQUAD_TYPE
++ #define	__BLKCNT64_T_TYPE	__SQUAD_TYPE
++-#define	__FSBLKCNT_T_TYPE	__ULONGWORD_TYPE
+++#define	__FSBLKCNT_T_TYPE	__UQUAD_TYPE
++ #define	__FSBLKCNT64_T_TYPE	__UQUAD_TYPE
++-#define	__FSFILCNT_T_TYPE	__ULONGWORD_TYPE
+++#define	__FSFILCNT_T_TYPE	__UQUAD_TYPE
++ #define	__FSFILCNT64_T_TYPE	__UQUAD_TYPE
++ #define	__FSWORD_T_TYPE		__SWORD_TYPE
++ #define	__ID_T_TYPE		__U32_TYPE
++@@ -62,14 +62,26 @@
++ #define __SYSCALL_ULONG_TYPE	__ULONGWORD_TYPE
++ #define __CPU_MASK_TYPE         __ULONGWORD_TYPE
++ 
++-#ifdef __LP64__
++ /* Tell the libc code that off_t and off64_t are actually the same type
++    for all ABI purposes, even if possibly expressed as different base types
++    for C type-checking purposes.  */
++-# define __OFF_T_MATCHES_OFF64_T	1
+++# define __OFF_T_MATCHES_OFF64_T			1
++ 
++ /* Same for ino_t and ino64_t.  */
++-# define __INO_T_MATCHES_INO64_T	1
+++# define __INO_T_MATCHES_INO64_T			1
+++
+++/* And for __blkcnt_t and __blkcnt64_t.  */
+++# define __BLKCNT_T_TYPE_MATCHES_BLKCNT64_T_TYPE	1
+++
+++/* And for __fsblkcnt_t and __fsblkcnt64_t.  */
+++# define __FSBLKCNT_T_TYPE_MATCHES_FSBLKCNT64_T_TYPE	1
+++
+++/* And for __fsbilcnt_t and __fsbilcnt64_t.  */
+++# define __FSFILCNT_T_TYPE_MATCHES_FSFILCNT64_T_TYPE	1
+++
+++#if __WORDSIZE == 32
+++/* And struct timespec needs pads.  */
+++# define timespec_needs_pads	1
++ #endif
++ 
++ /* Number of descriptors that can fit in an `fd_set'.  */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/Implies b/sysdeps/unix/sysv/linux/aarch64/ilp32/Implies
++new file mode 100644
++index 0000000..151f0e4
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/Implies
++@@ -0,0 +1,4 @@
+++aarch64/nptl
+++unix/sysv/linux/aarch64
+++unix/sysv/linux/generic
+++unix/sysv/linux/generic/wordsize-32
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-fxstatat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-fxstatat64.c
++new file mode 100644
++index 0000000..9a17a9b
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-fxstatat64.c
++@@ -0,0 +1,6 @@
+++/* In this implementation we do not really care whether the call fails
+++   because of missing kernel support since we do not even call the
+++   function in this case.  */
+++#undef __ASSUME_ATFCTS
+++#define __ASSUME_ATFCTS 1
+++#include "fxstatat64.c"
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-xstat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-xstat64.c
++new file mode 100644
++index 0000000..e77b753
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/dl-xstat64.c
++@@ -0,0 +1,6 @@
+++/* In this implementation we do not really care whether the call fails
+++   because of missing kernel support since we do not even call the
+++   function in this case.  */
+++#undef __ASSUME_ATFCTS
+++#define __ASSUME_ATFCTS 1
+++#include "xstat64.c"
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents.c
++new file mode 100644
++index 0000000..0f89a09
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents.c
++@@ -0,0 +1,78 @@
+++/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <dirent.h>
+++#include <stddef.h>
+++#include <stdint.h>
+++#include <string.h>
+++#include <unistd.h>
+++#include <sys/types.h>
+++#include <bits/wordsize.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++#include <linux/posix_types.h>
+++
+++struct kernel_dirent64
+++  {
+++    uint64_t		d_ino;
+++    int64_t		d_off;
+++    unsigned short int	d_reclen;
+++    unsigned char	d_type;
+++    char		d_name[256];
+++  };
+++
+++static size_t conv (char *buf, size_t nbytes)
+++{
+++	char *end = buf + nbytes;
+++	struct dirent *u = (struct dirent *) buf;
+++	struct kernel_dirent64 *k = (struct kernel_dirent64 *) buf;
+++	size_t sizd = offsetof(struct kernel_dirent64, d_name)
+++		  - offsetof(struct dirent, d_name);
+++
+++	while ((char*) k < end)
+++	{
+++	  struct kernel_dirent64 *nk = (void *) ((size_t)k + k->d_reclen);
+++	  size_t name_len = k->d_reclen - offsetof(struct kernel_dirent64, d_name);
+++
+++	  u->d_ino = k->d_ino;
+++	  u->d_off = k->d_off;
+++	  u->d_reclen = k->d_reclen - sizd;
+++	  u->d_type = k->d_type;
+++	  memcpy (u->d_name, k->d_name, name_len);
+++
+++	  u = (void *)((size_t) u + u->d_reclen);
+++	  k = nk;
+++	}
+++
+++	return (size_t) u - (size_t) buf;
+++}
+++
+++ssize_t
+++__getdents (int fd, char *buf, size_t nbytes)
+++{
+++
+++  /*struct kernel_dirent64 *k;*/
+++  int ret;
+++
+++  ret = INLINE_SYSCALL (getdents64, 3, fd, buf, nbytes);
+++  if (ret == -1)
+++	  return ret;
+++
+++  return conv(buf, ret);
+++}
+++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents64.c
++new file mode 100644
++index 0000000..9686730
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/getdents64.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/generic/getdents64.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/lseek64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/lseek64.c
++new file mode 100644
++index 0000000..e69de29
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap64.c
++new file mode 100644
++index 0000000..6f1a141
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap64.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/mmap64.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/msgctl.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/msgctl.c
++new file mode 100644
++index 0000000..caa9f36
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/msgctl.c
++@@ -0,0 +1,32 @@
+++/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/msg.h>
+++#include <ipc_priv.h>
+++#include <sysdep.h>
+++
+++int __msgctl (int msqid, int cmd, struct msqid_ds *buf);
+++
+++int
+++__msgctl (int msqid, int cmd, struct msqid_ds *buf)
+++{
+++  return INLINE_SYSCALL (msgctl, 3, msqid, cmd | __IPC_64, buf);
+++}
+++
+++#include <shlib-compat.h>
+++versioned_symbol (libc, __msgctl, msgctl, GLIBC_2_0);
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv.c
++new file mode 100644
++index 0000000..b5b9994
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv.c
++@@ -0,0 +1 @@
+++/* See preadv.c */
++\ No newline at end of file
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv64.c
++new file mode 100644
++index 0000000..72bfc63
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/preadv64.c
++@@ -0,0 +1,5 @@
+++#include <sysdeps/unix/sysv/linux/generic/wordsize-32/preadv64.c>
+++
+++weak_alias (__libc_preadv64, __libc_preadv)
+++weak_alias (__libc_preadv64, __preadv)
+++weak_alias (__libc_preadv64, preadv)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev.c
++new file mode 100644
++index 0000000..298a33e
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev.c
++@@ -0,0 +1 @@
+++/* Implemented in sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev64.c
++new file mode 100644
++index 0000000..61dbd18
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwritev64.c
++@@ -0,0 +1,5 @@
+++#include <sysdeps/unix/sysv/linux/generic/wordsize-32/pwritev64.c>
+++
+++weak_alias (__libc_pwritev64, __libc_pwritev)
+++weak_alias (__libc_pwritev64, __pwritev)
+++weak_alias (__libc_pwritev64, pwritev)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/readdir64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/readdir64.c
++new file mode 100644
++index 0000000..5263dcb
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/readdir64.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/readdir64.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/semctl.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/semctl.c
++new file mode 100644
++index 0000000..0c90527
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/semctl.c
++@@ -0,0 +1,53 @@
+++/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stdarg.h>
+++#include <sys/sem.h>
+++#include <ipc_priv.h>
+++#include <sysdep.h>
+++
+++/* Define a `union semun' that is for glibc here.  */
+++union semun
+++{
+++  int val;			/* value for SETVAL */
+++  struct semid_ds *buf;		/* buffer for IPC_STAT & IPC_SET */
+++  unsigned short int *array;	/* array for GETALL & SETALL */
+++  struct seminfo *__buf;	/* buffer for IPC_INFO */
+++};
+++
+++int __semctl (int semid, int semnum, int cmd, ...);
+++
+++int
+++__semctl (int semid, int semnum, int cmd, ...)
+++{
+++  union semun arg;
+++  va_list ap;
+++
+++  va_start (ap, cmd);
+++
+++  /* Get the argument.  */
+++  arg = va_arg (ap, union semun);
+++
+++  va_end (ap);
+++
+++  return INLINE_SYSCALL (semctl, 4, semid, semnum, cmd | __IPC_64,
+++			 arg.array);
+++}
+++
+++#include <shlib-compat.h>
+++versioned_symbol (libc, __semctl, semctl, GLIBC_2_0);
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/shlib-versions b/sysdeps/unix/sysv/linux/aarch64/ilp32/shlib-versions
++new file mode 100644
++index 0000000..17db764
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/shlib-versions
++@@ -0,0 +1,7 @@
+++DEFAULT			GLIBC_2.21
+++
+++%ifdef HAVE_AARCH64_BE
+++ld=ld-linux-aarch64_be_ilp32.so.1
+++%else
+++ld=ld-linux-aarch64_ilp32.so.1
+++%endif
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/shmctl.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/shmctl.c
++new file mode 100644
++index 0000000..ea0fa94
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/shmctl.c
++@@ -0,0 +1,32 @@
+++/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/shm.h>
+++#include <ipc_priv.h>
+++#include <sysdep.h>
+++
+++int __shmctl (int shmid, int cmd, struct shmid_ds *buf);
+++
+++int
+++__shmctl (int shmid, int cmd, struct shmid_ds *buf)
+++{
+++  return INLINE_SYSCALL (shmctl, 3, shmid, cmd | __IPC_64, buf);
+++}
+++
+++#include <shlib-compat.h>
+++versioned_symbol (libc, __shmctl, shmctl, GLIBC_2_0);
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/syscalls.list b/sysdeps/unix/sysv/linux/aarch64/ilp32/syscalls.list
++new file mode 100644
++index 0000000..e69de29
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ioctl.S b/sysdeps/unix/sysv/linux/aarch64/ioctl.S
++deleted file mode 100644
++index eddd613..0000000
++--- a/sysdeps/unix/sysv/linux/aarch64/ioctl.S
+++++ /dev/null
++@@ -1,31 +0,0 @@
++-/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
++-
++-   This file is part of the GNU C Library.
++-
++-   The GNU C Library is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License as
++-   published by the Free Software Foundation; either version 2.1 of the
++-   License, or (at your option) any later version.
++-
++-   The GNU C Library is distributed in the hope that it will be useful,
++-   but WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with the GNU C Library; if not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include <sysdep.h>
++-
++-	.text
++-ENTRY(__ioctl)
++-	mov	x8, #__NR_ioctl
++-	sxtw	x0, w0
++-	svc	#0x0
++-	cmn	x0, #4095
++-	b.cs	.Lsyscall_error
++-	ret
++-PSEUDO_END (__ioctl)
++-
++-weak_alias (__ioctl, ioctl)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/lp64/Implies b/sysdeps/unix/sysv/linux/aarch64/lp64/Implies
++new file mode 100644
++index 0000000..6418211
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/lp64/Implies
++@@ -0,0 +1,4 @@
+++aarch64/nptl
+++unix/sysv/linux/aarch64
+++unix/sysv/linux/generic
+++unix/sysv/linux/wordsize-64
++diff --git a/sysdeps/unix/sysv/linux/aarch64/lp64/ioctl.S b/sysdeps/unix/sysv/linux/aarch64/lp64/ioctl.S
++new file mode 100644
++index 0000000..eddd613
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/lp64/ioctl.S
++@@ -0,0 +1,31 @@
+++/* Copyright (C) 2012-2016 Free Software Foundation, Inc.
+++
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public License as
+++   published by the Free Software Foundation; either version 2.1 of the
+++   License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <sysdep.h>
+++
+++	.text
+++ENTRY(__ioctl)
+++	mov	x8, #__NR_ioctl
+++	sxtw	x0, w0
+++	svc	#0x0
+++	cmn	x0, #4095
+++	b.cs	.Lsyscall_error
+++	ret
+++PSEUDO_END (__ioctl)
+++
+++weak_alias (__ioctl, ioctl)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/lp64/mmap.c b/sysdeps/unix/sysv/linux/aarch64/lp64/mmap.c
++new file mode 100644
++index 0000000..0133381
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/lp64/mmap.c
++@@ -0,0 +1,34 @@
+++/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
+++
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public License as
+++   published by the Free Software Foundation; either version 2.1 of the
+++   License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <sys/types.h>
+++#include <sys/mman.h>
+++#include <errno.h>
+++#include <sys/syscall.h>
+++#include <sysdep.h>
+++#include <unistd.h>
+++
+++__ptr_t
+++__mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
+++{
+++  return (__ptr_t) INLINE_SYSCALL (mmap, 6, addr, len, prot, flags, fd, offset);
+++}
+++
+++weak_alias (__mmap, mmap)
+++weak_alias (__mmap, mmap64)
+++weak_alias (__mmap, __mmap64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/lp64/shlib-versions b/sysdeps/unix/sysv/linux/aarch64/lp64/shlib-versions
++new file mode 100644
++index 0000000..e1768a7
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/lp64/shlib-versions
++@@ -0,0 +1,7 @@
+++DEFAULT			GLIBC_2.17
+++
+++%ifdef HAVE_AARCH64_BE
+++ld=ld-linux-aarch64_be.so.1
+++%else
+++ld=ld-linux-aarch64.so.1
+++%endif
++diff --git a/sysdeps/unix/sysv/linux/aarch64/mmap.c b/sysdeps/unix/sysv/linux/aarch64/mmap.c
++deleted file mode 100644
++index 0133381..0000000
++--- a/sysdeps/unix/sysv/linux/aarch64/mmap.c
+++++ /dev/null
++@@ -1,34 +0,0 @@
++-/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
++-
++-   This file is part of the GNU C Library.
++-
++-   The GNU C Library is free software; you can redistribute it and/or
++-   modify it under the terms of the GNU Lesser General Public License as
++-   published by the Free Software Foundation; either version 2.1 of the
++-   License, or (at your option) any later version.
++-
++-   The GNU C Library is distributed in the hope that it will be useful,
++-   but WITHOUT ANY WARRANTY; without even the implied warranty of
++-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++-   Lesser General Public License for more details.
++-
++-   You should have received a copy of the GNU Lesser General Public
++-   License along with the GNU C Library; if not, see
++-   <http://www.gnu.org/licenses/>.  */
++-
++-#include <sys/types.h>
++-#include <sys/mman.h>
++-#include <errno.h>
++-#include <sys/syscall.h>
++-#include <sysdep.h>
++-#include <unistd.h>
++-
++-__ptr_t
++-__mmap (__ptr_t addr, size_t len, int prot, int flags, int fd, off_t offset)
++-{
++-  return (__ptr_t) INLINE_SYSCALL (mmap, 6, addr, len, prot, flags, fd, offset);
++-}
++-
++-weak_alias (__mmap, mmap)
++-weak_alias (__mmap, mmap64)
++-weak_alias (__mmap, __mmap64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/shlib-versions b/sysdeps/unix/sysv/linux/aarch64/shlib-versions
++deleted file mode 100644
++index e1768a7..0000000
++--- a/sysdeps/unix/sysv/linux/aarch64/shlib-versions
+++++ /dev/null
++@@ -1,7 +0,0 @@
++-DEFAULT			GLIBC_2.17
++-
++-%ifdef HAVE_AARCH64_BE
++-ld=ld-linux-aarch64_be.so.1
++-%else
++-ld=ld-linux-aarch64.so.1
++-%endif
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0021-ILP32-introduce-syscalls-that-pass-off_t.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0021-ILP32-introduce-syscalls-that-pass-off_t.patch
+new file mode 100644
+index 0000000..a53e053
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0021-ILP32-introduce-syscalls-that-pass-off_t.patch
+@@ -0,0 +1,242 @@
++From 0e6f980bd315cf6a097c08cdc343748104593c87 Mon Sep 17 00:00:00 2001
++From: Yury Norov <yury.norov@gmail.com>
++Date: Tue, 21 Jun 2016 08:07:05 +0300
++Subject: [PATCH 21/27] ILP32: introduce syscalls that pass off_t
++
++ILP32 has 64-bit off_t, to follow modern requirements.
++But kernel clears top-halves of input registers. It means
++we have to pass corresponding arguments in a pair, like
++aarch32 does. In this patch all affected syscalls are redefined.
++Most of them are taken from arm code.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c  | 31 +++++++++++++++++++
++ .../unix/sysv/linux/aarch64/ilp32/fallocate64.c    |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate.c  |  1 +
++ .../unix/sysv/linux/aarch64/ilp32/ftruncate64.c    |  4 +++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/llseek.c     |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/lseek.c      | 36 ++++++++++++++++++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/mmap.c       |  1 +
++ .../unix/sysv/linux/aarch64/ilp32/posix_fadvise.c  |  1 +
++ .../sysv/linux/aarch64/ilp32/posix_fadvise64.c     |  2 ++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pread.c      |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c    |  5 +++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite.c     |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c   |  5 +++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/readahead.c  |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/truncate.c   |  1 +
++ sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c |  4 +++
++ 16 files changed, 96 insertions(+)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/llseek.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/lseek.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/mmap.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pread.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/readahead.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/truncate.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c
++new file mode 100644
++index 0000000..4951d06
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c
++@@ -0,0 +1,31 @@
+++/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <fcntl.h>
+++#include <sysdep-cancel.h>
+++
+++
+++/* Reserve storage for the data of the file associated with FD.  */
+++int
+++fallocate (int fd, int mode, __off_t offset, __off_t len)
+++{
+++  return SYSCALL_CANCEL (fallocate, fd, mode,
+++			 __LONG_LONG_PAIR (offset >> 32, offset),
+++			 __LONG_LONG_PAIR (len >> 32, len));
+++}
+++weak_alias (fallocate, fallocate64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate64.c
++new file mode 100644
++index 0000000..f27735a
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate64.c
++@@ -0,0 +1 @@
+++/* See sysdeps/unix/sysv/linux/aarch64/ilp32/fallocate.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate.c
++new file mode 100644
++index 0000000..fb5b598
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate.c
++@@ -0,0 +1 @@
+++/* See sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncatei64.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate64.c
++new file mode 100644
++index 0000000..bd0f5fe
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/ftruncate64.c
++@@ -0,0 +1,4 @@
+++#include <sysdeps/unix/sysv/linux/arm/ftruncate64.c>
+++
+++weak_alias (__ftruncate64, __ftruncate)
+++weak_alias (__ftruncate64, ftruncate)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/llseek.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/llseek.c
++new file mode 100644
++index 0000000..b00ca27
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/llseek.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/generic/wordsize-32/llseek.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/lseek.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/lseek.c
++new file mode 100644
++index 0000000..6e00863
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/lseek.c
++@@ -0,0 +1,36 @@
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <unistd.h>
+++#include <sys/types.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++off_t
+++__lseek (int fd, off_t offset, int whence)
+++{
+++  loff_t res;
+++  int rc = INLINE_SYSCALL (_llseek, 5, fd, (off_t) (offset >> 32),
+++                           (off_t) offset, &res, whence);
+++  return rc ?: res;
+++}
+++libc_hidden_def (__lseek)
+++weak_alias (__lseek, lseek)
+++strong_alias (__lseek, __libc_lseek)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap.c
++new file mode 100644
++index 0000000..813ab64
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/mmap.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/arm/mmap.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise.c
++new file mode 100644
++index 0000000..4430e6e
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/arm/posix_fadvise.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise64.c
++new file mode 100644
++index 0000000..596c6a1
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/posix_fadvise64.c
++@@ -0,0 +1,2 @@
+++#define __NR_arm_fadvise64_64 __NR_fadvise64_64
+++#include <sysdeps/unix/sysv/linux/arm/posix_fadvise64.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pread.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pread.c
++new file mode 100644
++index 0000000..96b7ccb
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pread.c
++@@ -0,0 +1 @@
+++/* See sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c
++new file mode 100644
++index 0000000..7637028
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pread64.c
++@@ -0,0 +1,5 @@
+++#include <sysdeps/unix/sysv/linux/arm/pread64.c>
+++
+++strong_alias (__libc_pread64, __libc_pread)
+++strong_alias (__libc_pread64, __pread)
+++weak_alias (__libc_pread64, pread)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite.c
++new file mode 100644
++index 0000000..ddadc61
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite.c
++@@ -0,0 +1 @@
+++/* See sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c
++new file mode 100644
++index 0000000..2089a05
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/pwrite64.c
++@@ -0,0 +1,5 @@
+++#include <sysdeps/unix/sysv/linux/arm/pwrite64.c>
+++
+++weak_alias (__libc_pwrite64, __libc_pwrite)
+++weak_alias (__libc_pwrite64, __pwrite)
+++weak_alias (__libc_pwrite64, pwrite)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/readahead.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/readahead.c
++new file mode 100644
++index 0000000..80170c3
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/readahead.c
++@@ -0,0 +1 @@
+++#include <sysdeps/unix/sysv/linux/arm/readahead.c>
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate.c
++new file mode 100644
++index 0000000..23548a5
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate.c
++@@ -0,0 +1 @@
+++/* See sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c
++new file mode 100644
++index 0000000..56cb37f
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/truncate64.c
++@@ -0,0 +1,4 @@
+++#include <sysdeps/unix/sysv/linux/arm/truncate64.c>
+++
+++weak_alias (truncate64, __truncate)
+++weak_alias (truncate64, truncate)
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0022-ILP32-support-stat-syscall-family.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0022-ILP32-support-stat-syscall-family.patch
+new file mode 100644
+index 0000000..4282997
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0022-ILP32-support-stat-syscall-family.patch
+@@ -0,0 +1,893 @@
++From b7911766a5afd1e4bd9f29f28e505156fc3b2291 Mon Sep 17 00:00:00 2001
++From: Yury Norov <yury.norov@gmail.com>
++Date: Tue, 21 Jun 2016 08:07:06 +0300
++Subject: [PATCH 22/27] ILP32: support stat syscall family
++
++stat and statfs structures has their layouts identical to lp64
++after changing off_t, ino_t etc sizes to 64-bit. It means we can
++pass it to kernel same way as lp64 does.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/unix/sysv/linux/aarch64/bits/stat.h        | 195 +++++++++++++++++++++
++ sysdeps/unix/sysv/linux/aarch64/bits/statfs.h      |  72 ++++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c    |  29 +++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c  |  72 ++++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c     |  51 ++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c   |  54 ++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c   |  48 +++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c |  52 ++++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c     |  47 +++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c     |  30 ++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c   |  29 +++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c      |  47 +++++
++ sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c    |  47 +++++
++ 13 files changed, 773 insertions(+)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/bits/stat.h
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
++
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/stat.h b/sysdeps/unix/sysv/linux/aarch64/bits/stat.h
++new file mode 100644
++index 0000000..eec6789
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/stat.h
++@@ -0,0 +1,195 @@
+++/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#if !defined _SYS_STAT_H && !defined _FCNTL_H
+++# error "Never include <bits/stat.h> directly; use <sys/stat.h> instead."
+++#endif
+++
+++#ifndef _BITS_STAT_H
+++#define _BITS_STAT_H	1
+++
+++/* Versions of the `struct stat' data structure.  */
+++#define _STAT_VER_KERNEL	0
+++#define _STAT_VER_LINUX		0
+++#define _STAT_VER		_STAT_VER_KERNEL
+++
+++/* Versions of the `xmknod' interface.  */
+++#define _MKNOD_VER_LINUX	0
+++
+++#ifdef __ILP32__
+++#include <endian.h>
+++struct __kernel_timespec
+++  {
+++    unsigned long long tv_sec;		/* Seconds.  */
+++    long long tv_nsec;			/* Nanoseconds.  */
+++  };
+++#define conv_timespec(u, k) do {	\
+++	(u)->tv_sec = (k)->tv_sec;	\
+++	(u)->tv_nsec = (k)->tv_nsec;	\
+++} while (0)
+++#if __BYTE_ORDER == __LITTLE_ENDIAN
+++#define __type3264(type, name)	\
+++	type (name); type name##_pad
+++#else
+++#define __type3264(type, name)	\
+++	type name##_pad; type name
+++#endif
+++
+++#else
+++#define __kernel_timespec timespec
+++#define conv_timespec(u, k)
+++#define __type3264(type, name) type name
+++#endif /* __ILP32__ */
+++
+++struct stat
+++  {
+++    __dev_t st_dev;			/* Device.  */
+++    __ino_t st_ino;			/* File serial number.	*/
+++    __mode_t st_mode;			/* File mode.  */
+++    __nlink_t st_nlink;			/* Link count.  */
+++    __uid_t st_uid;			/* User ID of the file's owner.	*/
+++    __gid_t st_gid;			/* Group ID of the file's group.*/
+++    __dev_t st_rdev;			/* Device number, if device.  */
+++    __dev_t __pad1;
+++    __off_t st_size;			/* Size of file, in bytes.  */
+++    __blksize_t st_blksize;		/* Optimal block size for I/O.  */
+++    int __pad2;
+++
+++    __blkcnt_t st_blocks;		/* Number 512-byte blocks allocated. */
+++#ifdef __USE_XOPEN2K8
+++    /* Nanosecond resolution timestamps are stored in a format
+++       equivalent to 'struct timespec'.  This is the type used
+++       whenever possible but the Unix namespace rules do not allow the
+++       identifier 'timespec' to appear in the <sys/stat.h> header.
+++       Therefore we have to handle the use of this header in strictly
+++       standard-compliant sources special.  */
+++    union {
+++	    struct timespec st_atim;		/* Time of last access.  */
+++	    struct __kernel_timespec __st_atim;
+++    };
+++    union {
+++	    struct timespec st_mtim;		/* Time of last modification.  */
+++	    struct __kernel_timespec __st_mtim;
+++    };
+++    union {
+++	    struct timespec st_ctim;		/* Time of last status change.  */
+++	    struct __kernel_timespec __st_ctim;
+++    };
+++# define st_atime st_atim.tv_sec	/* Backward compatibility.  */
+++# define st_mtime st_mtim.tv_sec
+++# define st_ctime st_ctim.tv_sec
+++#else
+++    __type3264(__time_t, st_atime);			/* Time of last access.  */
+++    __type3264(unsigned long int, st_atimensec);	/* Nsecs of last access.  */
+++    __type3264(__time_t, st_mtime);			/* Time of last modification.  */
+++    __type3264(unsigned long int, st_mtimensec);	/* Nsecs of last modification.  */
+++    __type3264(__time_t, st_ctime);			/* Time of last status change.  */
+++    __type3264(unsigned long int, st_ctimensec);	/* Nsecs of last status change.  */
+++#endif
+++    int __glibc_reserved[2];
+++  };
+++
+++#ifdef __USE_LARGEFILE64
+++struct stat64
+++  {
+++    __dev_t st_dev;			/* Device.  */
+++    __ino_t st_ino;			/* File serial number.	*/
+++    __mode_t st_mode;			/* File mode.  */
+++    __nlink_t st_nlink;			/* Link count.  */
+++    __uid_t st_uid;			/* User ID of the file's owner.	*/
+++    __gid_t st_gid;			/* Group ID of the file's group.*/
+++    __dev_t st_rdev;			/* Device number, if device.  */
+++    __dev_t __pad1;
+++    __off_t st_size;			/* Size of file, in bytes.  */
+++    __blksize_t st_blksize;		/* Optimal block size for I/O.  */
+++    int __pad2;
+++
+++    __blkcnt_t st_blocks;		/* Number 512-byte blocks allocated. */
+++#ifdef __USE_XOPEN2K8
+++    /* Nanosecond resolution timestamps are stored in a format
+++       equivalent to 'struct timespec'.  This is the type used
+++       whenever possible but the Unix namespace rules do not allow the
+++       identifier 'timespec' to appear in the <sys/stat.h> header.
+++       Therefore we have to handle the use of this header in strictly
+++       standard-compliant sources special.  */
+++    union {
+++	    struct timespec st_atim;		/* Time of last access.  */
+++	    struct __kernel_timespec __st_atim;
+++    };
+++    union {
+++	    struct timespec st_mtim;		/* Time of last modification.  */
+++	    struct __kernel_timespec __st_mtim;
+++    };
+++    union {
+++	    struct timespec st_ctim;		/* Time of last status.  */
+++	    struct __kernel_timespec __st_ctim;
+++    };
+++# define st_atime st_atim.tv_sec	/* Backward compatibility.  */
+++# define st_mtime st_mtim.tv_sec
+++# define st_ctime st_ctim.tv_sec
+++#else
+++    __type3264(__time_t, st_atime);			/* Time of last access.  */
+++    __type3264(unsigned long int, st_atimensec);	/* Nsecs of last access.  */
+++    __type3264(__time_t, st_mtime);			/* Time of last modification.  */
+++    __type3264(unsigned long int, st_mtimensec);	/* Nsecs of last modification.  */
+++    __type3264(__time_t, st_ctime);			/* Time of last status change.  */
+++    __type3264(unsigned long int, st_ctimensec);	/* Nsecs of last status change.  */
+++#endif
+++    int __glibc_reserved[2];
+++  };
+++#endif
+++
+++/* Tell code we have these members.  */
+++#define	_STATBUF_ST_BLKSIZE
+++#define _STATBUF_ST_RDEV
+++/* Nanosecond resolution time values are supported.  */
+++#define _STATBUF_ST_NSEC
+++
+++/* Encoding of the file mode.  */
+++
+++#define	__S_IFMT	0170000	/* These bits determine file type.  */
+++
+++/* File types.  */
+++#define	__S_IFDIR	0040000	/* Directory.  */
+++#define	__S_IFCHR	0020000	/* Character device.  */
+++#define	__S_IFBLK	0060000	/* Block device.  */
+++#define	__S_IFREG	0100000	/* Regular file.  */
+++#define	__S_IFIFO	0010000	/* FIFO.  */
+++#define	__S_IFLNK	0120000	/* Symbolic link.  */
+++#define	__S_IFSOCK	0140000	/* Socket.  */
+++
+++/* POSIX.1b objects.  Note that these macros always evaluate to zero.  But
+++   they do it by enforcing the correct use of the macros.  */
+++#define __S_TYPEISMQ(buf)  ((buf)->st_mode - (buf)->st_mode)
+++#define __S_TYPEISSEM(buf) ((buf)->st_mode - (buf)->st_mode)
+++#define __S_TYPEISSHM(buf) ((buf)->st_mode - (buf)->st_mode)
+++
+++/* Protection bits.  */
+++
+++#define	__S_ISUID	04000	/* Set user ID on execution.  */
+++#define	__S_ISGID	02000	/* Set group ID on execution.  */
+++#define	__S_ISVTX	01000	/* Save swapped text after use (sticky).  */
+++#define	__S_IREAD	0400	/* Read by owner.  */
+++#define	__S_IWRITE	0200	/* Write by owner.  */
+++#define	__S_IEXEC	0100	/* Execute by owner.  */
+++
+++#ifdef __USE_ATFILE
+++# define UTIME_NOW	((1l << 30) - 1l)
+++# define UTIME_OMIT	((1l << 30) - 2l)
+++#endif
+++
+++#endif	/* bits/stat.h */
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h b/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
++new file mode 100644
++index 0000000..81a8626
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
++@@ -0,0 +1,72 @@
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#ifndef _SYS_STATFS_H
+++# error "Never include <bits/statfs.h> directly; use <sys/statfs.h> instead."
+++#endif
+++
+++#include <endian.h>
+++#include <bits/types.h>
+++#include <bits/wordsize.h>
+++
+++/* 64-bit libc uses the kernel's 'struct statfs', accessed via the
+++   statfs() syscall; 32-bit libc uses the kernel's 'struct statfs64'
+++   and accesses it via the statfs64() syscall.  All the various
+++   APIs offered by libc use the kernel shape for their struct statfs
+++   structure; the only difference is that 32-bit programs not
+++   using __USE_FILE_OFFSET64 only see the low 32 bits of some
+++   of the fields (the __fsblkcnt_t and __fsfilcnt_t fields).  */
+++
+++struct statfs
+++  {
+++    unsigned long long f_type;
+++    unsigned long long f_bsize;
+++    __fsblkcnt_t f_blocks;
+++    __fsblkcnt_t f_bfree;
+++    __fsblkcnt_t f_bavail;
+++    __fsfilcnt_t f_files;
+++    __fsfilcnt_t f_ffree;
+++    __fsid_t f_fsid;
+++    unsigned long long f_namelen;
+++    unsigned long long f_frsize;
+++    unsigned long long f_flags;
+++    unsigned long long f_spare[4];
+++  };
+++
+++#ifdef __USE_LARGEFILE64
+++struct statfs64
+++  {
+++    unsigned long long f_type;
+++    unsigned long long f_bsize;
+++    __fsblkcnt_t f_blocks;
+++    __fsblkcnt_t f_bfree;
+++    __fsblkcnt_t f_bavail;
+++    __fsfilcnt_t f_files;
+++    __fsfilcnt_t f_ffree;
+++    __fsid_t f_fsid;
+++    unsigned long long f_namelen;
+++    unsigned long long f_frsize;
+++    unsigned long long f_flags;
+++    unsigned long long f_spare[4];
+++  };
+++#endif
+++
+++/* Tell code we have these members.  */
+++#define _STATFS_F_NAMELEN
+++#define _STATFS_F_FRSIZE
+++#define _STATFS_F_FLAGS
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
++new file mode 100644
++index 0000000..8e900fd
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
++@@ -0,0 +1,29 @@
+++/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/statfs.h>
+++#include <stddef.h>
+++
+++/* Return information about the filesystem on which FD resides.  */
+++int
+++__fstatfs (int fd, struct statfs *buf)
+++{
+++  return INLINE_SYSCALL (fstatfs64, 2, fd, buf);
+++}
+++weak_alias (__fstatfs, fstatfs)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
++new file mode 100644
++index 0000000..d7b90bb
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
++@@ -0,0 +1,72 @@
+++/* Return information about the filesystem on which FD resides.
+++   Copyright (C) 1996-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <string.h>
+++#include <sys/statfs.h>
+++#include <stddef.h>
+++#include <sysdep.h>
+++#include <kernel-features.h>
+++
+++/* Defined in statfs64.c.  */
+++extern int __no_statfs64 attribute_hidden;
+++
+++/* Return information about the filesystem on which FD resides.  */
+++int
+++__fstatfs64 (int fd, struct statfs64 *buf)
+++{
+++#ifdef __NR_fstatfs64
+++# if __ASSUME_STATFS64 == 0
+++  if (! __no_statfs64)
+++# endif
+++    {
+++      int result = INLINE_SYSCALL (fstatfs64, 2, fd, buf);
+++
+++# if __ASSUME_STATFS64 == 0
+++      if (result == 0 || errno != ENOSYS)
+++# endif
+++	return result;
+++
+++# if __ASSUME_STATFS64 == 0
+++      __no_statfs64 = 1;
+++# endif
+++    }
+++#endif
+++
+++#if __ASSUME_STATFS64 == 0
+++  struct statfs buf32;
+++
+++  if (__fstatfs (fd, &buf32) < 0)
+++    return -1;
+++
+++  buf->f_type = buf32.f_type;
+++  buf->f_bsize = buf32.f_bsize;
+++  buf->f_blocks = buf32.f_blocks;
+++  buf->f_bfree = buf32.f_bfree;
+++  buf->f_bavail = buf32.f_bavail;
+++  buf->f_files = buf32.f_files;
+++  buf->f_ffree = buf32.f_ffree;
+++  buf->f_fsid = buf32.f_fsid;
+++  buf->f_namelen = buf32.f_namelen;
+++  buf->f_frsize = buf32.f_frsize;
+++  memcpy (buf->f_spare, buf32.f_spare, sizeof (buf32.f_spare));
+++
+++  return 0;
+++#endif
+++}
+++weak_alias (__fstatfs64, fstatfs64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
++new file mode 100644
++index 0000000..83df0e4
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
++@@ -0,0 +1,51 @@
+++//#include <sysdeps/unix/sysv/linux/generic/wordsize-32/fxstat.c>
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stddef.h>
+++#include <sys/types.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file FD in BUF.  */
+++int
+++__fxstat (int vers, int fd, struct stat *buf)
+++{
+++  if (vers == _STAT_VER_KERNEL)
+++    {
+++      int rc = INLINE_SYSCALL (fstat64, 2, fd, buf);
+++      if (!rc) {
+++	      conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++      }
+++
+++      return rc;
+++
+++    }
+++
+++  errno = EINVAL;
+++  return -1;
+++}
+++
+++hidden_def (__fxstat)
+++weak_alias (__fxstat, _fxstat);
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
++new file mode 100644
++index 0000000..f651921
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
++@@ -0,0 +1,54 @@
+++/* fxstat64 using Linux fstat64 system call.
+++   Copyright (C) 1997-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stddef.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++#include <kernel-features.h>
+++
+++/* Get information about the file FD in BUF.  */
+++
+++int
+++___fxstat64 (int vers, int fd, struct stat64 *buf)
+++{
+++  int result;
+++  result = INLINE_SYSCALL (fstat64, 2, fd, buf);
+++  if (!result) {
+++	  conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	  conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	  conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++  }
+++  return result;
+++}
+++
+++#include <shlib-compat.h>
+++
+++#if SHLIB_COMPAT(libc, GLIBC_2_1, GLIBC_2_2)
+++versioned_symbol (libc, ___fxstat64, __fxstat64, GLIBC_2_2);
+++strong_alias (___fxstat64, __old__fxstat64)
+++compat_symbol (libc, __old__fxstat64, __fxstat64, GLIBC_2_1);
+++hidden_ver (___fxstat64, __fxstat64)
+++#else
+++strong_alias (___fxstat64, __fxstat64)
+++hidden_def (__fxstat64)
+++#endif
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
++new file mode 100644
++index 0000000..fb03a7d
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
++@@ -0,0 +1,48 @@
+++//#include <sysdeps/unix/sysv/linux/generic/wordsize-32/fxstatat.c>
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <fcntl.h>
+++#include <stddef.h>
+++#include <stdio.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file NAME in BUF.  */
+++int
+++__fxstatat (int vers, int fd, const char *file, struct stat *buf, int flag)
+++{
+++  if (vers == _STAT_VER_KERNEL)
+++    {
+++      int rc = INLINE_SYSCALL (fstatat64, 4, fd, file, buf, flag);
+++      if (!rc) {
+++	      conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++      }
+++      return rc;
+++    }
+++
+++  errno = EINVAL;
+++  return -1;
+++}
+++libc_hidden_def (__fxstatat)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
++new file mode 100644
++index 0000000..9d36ff4
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
++@@ -0,0 +1,52 @@
+++//#include <sysdeps/unix/sysv/linux/fxstatat64.c>
+++/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <fcntl.h>
+++#include <stddef.h>
+++#include <stdio.h>
+++#include <string.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file NAME in BUF.  */
+++
+++int
+++__fxstatat64 (int vers, int fd, const char *file, struct stat64 *st, int flag)
+++{
+++  if (__glibc_unlikely (vers != _STAT_VER_LINUX))
+++    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+++
+++  int result;
+++  INTERNAL_SYSCALL_DECL (err);
+++
+++  result = INTERNAL_SYSCALL (fstatat64, err, 4, fd, file, st, flag);
+++  if (!__builtin_expect (INTERNAL_SYSCALL_ERROR_P (result, err), 1)) {
+++      conv_timespec(&st->st_atim, &st->__st_atim);
+++      conv_timespec(&st->st_mtim, &st->__st_mtim);
+++      conv_timespec(&st->st_ctim, &st->__st_ctim);
+++      return 0;
+++  }
+++  else
+++    return INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (result,
+++								      err));
+++}
+++libc_hidden_def (__fxstatat64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
++new file mode 100644
++index 0000000..e8de70e
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
++@@ -0,0 +1,47 @@
+++//#include <sysdeps/unix/sysv/linux/generic/wordsize-32/lxstat.c>
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stddef.h>
+++#include <fcntl.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file NAME in BUF.  */
+++int
+++__lxstat (int vers, const char *name, struct stat *buf)
+++{
+++  if (vers == _STAT_VER_KERNEL)
+++    {
+++      int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf,
+++                               AT_SYMLINK_NOFOLLOW);
+++      if (!rc) {
+++	      conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++      }
+++      return rc;
+++    }
+++  errno = EINVAL;
+++  return -1;
+++}
+++hidden_def (__lxstat)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
++new file mode 100644
++index 0000000..bf70a7a
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
++@@ -0,0 +1,30 @@
+++/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/statfs.h>
+++#include <stddef.h>
+++
+++/* Return information about the filesystem on which FILE resides.  */
+++int
+++__statfs (const char *file, struct statfs *buf)
+++{
+++  return INLINE_SYSCALL (statfs64, 2, file, buf);
+++}
+++libc_hidden_def (__statfs)
+++weak_alias (__statfs, statfs)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
++new file mode 100644
++index 0000000..b99ab94
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
++@@ -0,0 +1,29 @@
+++/* Copyright (C) 2011-2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/statfs.h>
+++#include <stddef.h>
+++
+++/* Return information about the filesystem on which FILE resides.  */
+++int
+++__statfs64 (const char *file, struct statfs64 *buf)
+++{
+++  return INLINE_SYSCALL (statfs64, 2, file, buf);
+++}
+++weak_alias (__statfs64,statfs64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
++new file mode 100644
++index 0000000..b4e8423
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
++@@ -0,0 +1,47 @@
+++//#include <sysdeps/unix/sysv/linux/generic/wordsize-32/xstat.c>
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stddef.h>
+++#include <fcntl.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file NAME in BUF.  */
+++int
+++__xstat (int vers, const char *name, struct stat *buf)
+++{
+++  if (vers == _STAT_VER_KERNEL)
+++    {
+++      int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf, 0);
+++      if (!rc) {
+++	      conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++      }
+++      return rc;
+++    }
+++
+++  errno = EINVAL;
+++  return -1;
+++}
+++hidden_def (__xstat)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
++new file mode 100644
++index 0000000..e4f4cd5
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
++@@ -0,0 +1,47 @@
+++//#include <sysdeps/unix/sysv/linux/generic/wordsize-32/xstat64.c>
+++/* Copyright (C) 2011-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++   Contributed by Chris Metcalf <cmetcalf@tilera.com>, 2011.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <stddef.h>
+++#include <fcntl.h>
+++#include <sys/stat.h>
+++#include <kernel_stat.h>
+++
+++#include <sysdep.h>
+++#include <sys/syscall.h>
+++
+++/* Get information about the file NAME in BUF.  */
+++int
+++__xstat64 (int vers, const char *name, struct stat64 *buf)
+++{
+++  if (vers == _STAT_VER_KERNEL) {
+++    int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf, 0);
+++    if (!rc) {
+++	    conv_timespec(&buf->st_atim, &buf->__st_atim);
+++	    conv_timespec(&buf->st_mtim, &buf->__st_mtim);
+++	    conv_timespec(&buf->st_ctim, &buf->__st_ctim);
+++    }
+++
+++    return rc;
+++  }
+++
+++  errno = EINVAL;
+++  return -1;
+++}
+++hidden_def (__xstat64)
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0023-delouse-input-arguments-in-system-functions.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0023-delouse-input-arguments-in-system-functions.patch
+new file mode 100644
+index 0000000..2003c6e
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0023-delouse-input-arguments-in-system-functions.patch
+@@ -0,0 +1,340 @@
++From a8a3d814635ce8cf321b1c0c8ff09e849c3ceb2e Mon Sep 17 00:00:00 2001
++From: Yury Norov <ynorov@caviumnetworks.com>
++Date: Tue, 21 Jun 2016 08:07:07 +0300
++Subject: [PATCH 23/27] delouse input arguments in system functions
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/__longjmp.S                   | 2 ++
++ sysdeps/aarch64/dl-tlsdesc.S                  | 6 ++++++
++ sysdeps/aarch64/memcmp.S                      | 3 +++
++ sysdeps/aarch64/memcpy.S                      | 4 +++-
++ sysdeps/aarch64/memmove.S                     | 3 +++
++ sysdeps/aarch64/memset.S                      | 3 ++-
++ sysdeps/aarch64/setjmp.S                      | 1 +
++ sysdeps/aarch64/strchr.S                      | 1 +
++ sysdeps/aarch64/strchrnul.S                   | 1 +
++ sysdeps/aarch64/strcmp.S                      | 2 ++
++ sysdeps/aarch64/strcpy.S                      | 2 ++
++ sysdeps/aarch64/strlen.S                      | 2 ++
++ sysdeps/aarch64/strncmp.S                     | 3 +++
++ sysdeps/aarch64/strnlen.S                     | 3 +++
++ sysdeps/aarch64/strrchr.S                     | 1 +
++ sysdeps/aarch64/sysdep.h                      | 4 +++-
++ sysdeps/unix/sysv/linux/aarch64/clone.S       | 7 +++++++
++ sysdeps/unix/sysv/linux/aarch64/getcontext.S  | 1 +
++ sysdeps/unix/sysv/linux/aarch64/setcontext.S  | 1 +
++ sysdeps/unix/sysv/linux/aarch64/swapcontext.S | 1 +
++ 20 files changed, 48 insertions(+), 3 deletions(-)
++
++diff --git a/sysdeps/aarch64/__longjmp.S b/sysdeps/aarch64/__longjmp.S
++index 58332be..0377715 100644
++--- a/sysdeps/aarch64/__longjmp.S
+++++ b/sysdeps/aarch64/__longjmp.S
++@@ -46,6 +46,8 @@ ENTRY (__longjmp)
++ 	cfi_offset(d14, JB_D14<<3)
++ 	cfi_offset(d15, JB_D15<<3)
++ 
+++	DELOUSE(0)
+++
++ 	ldp	x19, x20, [x0, #JB_X19<<3]
++ 	ldp	x21, x22, [x0, #JB_X21<<3]
++ 	ldp	x23, x24, [x0, #JB_X23<<3]
++diff --git a/sysdeps/aarch64/dl-tlsdesc.S b/sysdeps/aarch64/dl-tlsdesc.S
++index fe8a17d..718dddf 100644
++--- a/sysdeps/aarch64/dl-tlsdesc.S
+++++ b/sysdeps/aarch64/dl-tlsdesc.S
++@@ -74,6 +74,7 @@
++ 	cfi_startproc
++ 	.align 2
++ _dl_tlsdesc_return:
+++	DELOUSE(0)
++ 	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	RET
++ 	cfi_endproc
++@@ -126,6 +127,7 @@ _dl_tlsdesc_undefweak:
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++ 	ldar	xzr, [x0]
+++	DELOUSE(0)
++ 	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	mrs	x1, tpidr_el0
++ 	sub	PTR_REG (0), PTR_REG (0), PTR_REG (1)
++@@ -174,6 +176,7 @@ _dl_tlsdesc_dynamic:
++ 	stp	x29, x30, [sp,#-(32+16*NSAVEXREGPAIRS)]!
++ 	cfi_adjust_cfa_offset (32+16*NSAVEXREGPAIRS)
++ 	mov	x29, sp
+++	DELOUSE(0)
++ 
++ 	/* Save just enough registers to support fast path, if we fall
++ 	   into slow path we will save additional registers.  */
++@@ -279,12 +282,14 @@ _dl_tlsdesc_resolve_rela:
++ 
++ 	SAVE_Q_REGISTERS
++ 
+++	DELOUSE(3)
++ 	ldr	PTR_REG (1), [x3, #PTR_SIZE]
++ 	bl	_dl_tlsdesc_resolve_rela_fixup
++ 
++ 	RESTORE_Q_REGISTERS
++ 
++ 	ldr	x0, [sp, #32+16*8]
+++	DELOUSE(0)
++ 	ldr	PTR_REG (1), [x0]
++ 	blr	x1
++ 
++@@ -346,6 +351,7 @@ _dl_tlsdesc_resolve_hold:
++ 	RESTORE_Q_REGISTERS
++ 
++ 	ldr	x0, [sp, #32+16*9]
+++	DELOUSE(0)
++ 	ldr	PTR_REG (1), [x0]
++ 	blr	x1
++ 
++diff --git a/sysdeps/aarch64/memcmp.S b/sysdeps/aarch64/memcmp.S
++index ae2d997..982aa02 100644
++--- a/sysdeps/aarch64/memcmp.S
+++++ b/sysdeps/aarch64/memcmp.S
++@@ -47,6 +47,9 @@
++ #define mask		x13
++ 
++ ENTRY_ALIGN (memcmp, 6)
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
++ 	cbz	limit, L(ret0)
++ 	eor	tmp1, src1, src2
++ 	tst	tmp1, #7
++diff --git a/sysdeps/aarch64/memcpy.S b/sysdeps/aarch64/memcpy.S
++index 442f390..e0bbbf8 100644
++--- a/sysdeps/aarch64/memcpy.S
+++++ b/sysdeps/aarch64/memcpy.S
++@@ -46,7 +46,9 @@
++ #include <sysdep.h>
++ 
++ ENTRY_ALIGN (memcpy, 6)
++-
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
++ 	mov	dst, dstin
++ 	cmp	count, #64
++ 	b.ge	L(cpy_not_short)
++diff --git a/sysdeps/aarch64/memmove.S b/sysdeps/aarch64/memmove.S
++index dd91db0..3f72dea 100644
++--- a/sysdeps/aarch64/memmove.S
+++++ b/sysdeps/aarch64/memmove.S
++@@ -46,6 +46,9 @@
++ #define D_h	x14
++ 
++ ENTRY_ALIGN (memmove, 6)
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
++ 
++ 	cmp	dstin, src
++ 	b.lo	L(downwards)
++diff --git a/sysdeps/aarch64/memset.S b/sysdeps/aarch64/memset.S
++index e49f4d6..e8eed9e 100644
++--- a/sysdeps/aarch64/memset.S
+++++ b/sysdeps/aarch64/memset.S
++@@ -52,7 +52,8 @@
++ #define tmp3w		w9
++ 
++ ENTRY_ALIGN (__memset, 6)
++-
+++	DELOUSE(0)
+++	DELOUSE(2)
++ 	mov	dst, dstin		/* Preserve return value.  */
++ 	ands	A_lw, val, #255
++ #ifndef DONT_USE_DC
++diff --git a/sysdeps/aarch64/setjmp.S b/sysdeps/aarch64/setjmp.S
++index da83f19..d608660 100644
++--- a/sysdeps/aarch64/setjmp.S
+++++ b/sysdeps/aarch64/setjmp.S
++@@ -33,6 +33,7 @@ END (_setjmp)
++ libc_hidden_def (_setjmp)
++ 
++ ENTRY (__sigsetjmp)
+++	DELOUSE(0)
++ 
++ 1:
++ 	stp	x19, x20, [x0, #JB_X19<<3]
++diff --git a/sysdeps/aarch64/strchr.S b/sysdeps/aarch64/strchr.S
++index 5e3aecf..838384c 100644
++--- a/sysdeps/aarch64/strchr.S
+++++ b/sysdeps/aarch64/strchr.S
++@@ -62,6 +62,7 @@
++ /* Locals and temporaries.  */
++ 
++ ENTRY (strchr)
+++	DELOUSE(0)
++ 	mov	wtmp2, #0x0401
++ 	movk	wtmp2, #0x4010, lsl #16
++ 	dup	vrepchr.16b, chrin
++diff --git a/sysdeps/aarch64/strchrnul.S b/sysdeps/aarch64/strchrnul.S
++index a624c8d..b60df26 100644
++--- a/sysdeps/aarch64/strchrnul.S
+++++ b/sysdeps/aarch64/strchrnul.S
++@@ -60,6 +60,7 @@
++    identify exactly which byte is causing the termination.  */
++ 
++ ENTRY (__strchrnul)
+++	DELOUSE(0)
++ 	/* Magic constant 0x40100401 to allow us to identify which lane
++ 	   matches the termination condition.  */
++ 	mov	wtmp2, #0x0401
++diff --git a/sysdeps/aarch64/strcmp.S b/sysdeps/aarch64/strcmp.S
++index ba0ccb4..ccfe281 100644
++--- a/sysdeps/aarch64/strcmp.S
+++++ b/sysdeps/aarch64/strcmp.S
++@@ -49,6 +49,8 @@
++ 	/* Start of performance-critical section  -- one 64B cache line.  */
++ ENTRY_ALIGN(strcmp, 6)
++ 
+++	DELOUSE(0)
+++	DELOUSE(1)
++ 	eor	tmp1, src1, src2
++ 	mov	zeroones, #REP8_01
++ 	tst	tmp1, #7
++diff --git a/sysdeps/aarch64/strcpy.S b/sysdeps/aarch64/strcpy.S
++index 0694199..2a281b9 100644
++--- a/sysdeps/aarch64/strcpy.S
+++++ b/sysdeps/aarch64/strcpy.S
++@@ -91,6 +91,8 @@
++ #define MIN_PAGE_SIZE (1 << MIN_PAGE_P2)
++ 
++ ENTRY_ALIGN (STRCPY, 6)
+++	DELOUSE(0)
+++	DELOUSE(1)
++ 	/* For moderately short strings, the fastest way to do the copy is to
++ 	   calculate the length of the string in the same way as strlen, then
++ 	   essentially do a memcpy of the result.  This avoids the need for
++diff --git a/sysdeps/aarch64/strlen.S b/sysdeps/aarch64/strlen.S
++index 9b4d1da..4734cfb 100644
++--- a/sysdeps/aarch64/strlen.S
+++++ b/sysdeps/aarch64/strlen.S
++@@ -85,6 +85,8 @@
++ 	   boundary.  */
++ 
++ ENTRY_ALIGN (strlen, 6)
+++	DELOUSE(0)
+++	DELOUSE(1)
++ 	and	tmp1, srcin, MIN_PAGE_SIZE - 1
++ 	mov	zeroones, REP8_01
++ 	cmp	tmp1, MIN_PAGE_SIZE - 16
++diff --git a/sysdeps/aarch64/strncmp.S b/sysdeps/aarch64/strncmp.S
++index f6a17fd..a372654 100644
++--- a/sysdeps/aarch64/strncmp.S
+++++ b/sysdeps/aarch64/strncmp.S
++@@ -51,6 +51,9 @@
++ #define endloop		x15
++ 
++ ENTRY_ALIGN_AND_PAD (strncmp, 6, 7)
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
++ 	cbz	limit, L(ret0)
++ 	eor	tmp1, src1, src2
++ 	mov	zeroones, #REP8_01
++diff --git a/sysdeps/aarch64/strnlen.S b/sysdeps/aarch64/strnlen.S
++index 4cce45f..6f67221 100644
++--- a/sysdeps/aarch64/strnlen.S
+++++ b/sysdeps/aarch64/strnlen.S
++@@ -50,6 +50,9 @@
++ #define REP8_80 0x8080808080808080
++ 
++ ENTRY_ALIGN_AND_PAD (__strnlen, 6, 9)
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
++ 	cbz	limit, L(hit_limit)
++ 	mov	zeroones, #REP8_01
++ 	bic	src, srcin, #15
++diff --git a/sysdeps/aarch64/strrchr.S b/sysdeps/aarch64/strrchr.S
++index 44c1917..bb85a60 100644
++--- a/sysdeps/aarch64/strrchr.S
+++++ b/sysdeps/aarch64/strrchr.S
++@@ -68,6 +68,7 @@
++    identify exactly which byte is causing the termination, and why.  */
++ 
++ ENTRY(strrchr)
+++	DELOUSE(0)
++ 	cbz	x1, L(null_search)
++ 	/* Magic constant 0x40100401 to allow us to identify which lane
++ 	   matches the requested byte.  Magic constant 0x80200802 used
++diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
++index f2ea821..c4ff5e7 100644
++--- a/sysdeps/aarch64/sysdep.h
+++++ b/sysdeps/aarch64/sysdep.h
++@@ -25,10 +25,12 @@
++ #define AARCH64_R(NAME)		R_AARCH64_ ## NAME
++ #define PTR_REG(n)	x##n
++ #define PTR_LOG_SIZE	3
++-#else
+++#define DELOUSE(n)
+++#else	/* __ILP32__ */
++ #define AARCH64_R(NAME)		R_AARCH64_P32_ ## NAME
++ #define PTR_REG(n)	w##n
++ #define PTR_LOG_SIZE	2
+++#define DELOUSE(n)	mov     w##n, w##n
++ #endif
++ 
++ #define PTR_SIZE	(1<<PTR_LOG_SIZE)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/clone.S b/sysdeps/unix/sysv/linux/aarch64/clone.S
++index 596fb9c..91a1d4c 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/clone.S
+++++ b/sysdeps/unix/sysv/linux/aarch64/clone.S
++@@ -39,6 +39,13 @@
++  */
++         .text
++ ENTRY(__clone)
+++	DELOUSE(0)
+++	DELOUSE(1)
+++	DELOUSE(2)
+++	DELOUSE(3)
+++	DELOUSE(4)
+++	DELOUSE(5)
+++	DELOUSE(6)
++ 	/* Save args for the child.  */
++ 	mov	x10, x0
++ 	mov	x11, x2
++diff --git a/sysdeps/unix/sysv/linux/aarch64/getcontext.S b/sysdeps/unix/sysv/linux/aarch64/getcontext.S
++index 71e526c..35ff326 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/getcontext.S
+++++ b/sysdeps/unix/sysv/linux/aarch64/getcontext.S
++@@ -30,6 +30,7 @@
++ 	.text
++ 
++ ENTRY(__getcontext)
+++	DELOUSE(0)
++ 	/* The saved context will return to the getcontext() call point
++ 	   with a return value of 0 */
++ 	str	xzr,	  [x0, oX0 +  0 * SZREG]
++diff --git a/sysdeps/unix/sysv/linux/aarch64/setcontext.S b/sysdeps/unix/sysv/linux/aarch64/setcontext.S
++index d17f8c8..7d854bd 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/setcontext.S
+++++ b/sysdeps/unix/sysv/linux/aarch64/setcontext.S
++@@ -34,6 +34,7 @@
++ 	.text
++ 
++ ENTRY (__setcontext)
+++	DELOUSE(0)
++ 	/* Save a copy of UCP.  */
++ 	mov	x9, x0
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/swapcontext.S b/sysdeps/unix/sysv/linux/aarch64/swapcontext.S
++index c1a16f3..764fedc 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/swapcontext.S
+++++ b/sysdeps/unix/sysv/linux/aarch64/swapcontext.S
++@@ -27,6 +27,7 @@
++ 
++ 	.text
++ ENTRY(__swapcontext)
+++	DELOUSE(0)
++ 	/* Set the value returned when swapcontext() returns in this context. */
++ 	str	xzr,      [x0, oX0 +  0 * SZREG]
++ 
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch
+new file mode 100644
+index 0000000..85c7a0a
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch
+@@ -0,0 +1,86 @@
++From bf7d56bdd02cdd5c3f6166b5158e1b8c57b148ed Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:08 +0300
++Subject: [PATCH 24/27] Add support for AT_ARM64_MIDR.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ elf/dl-sysdep.c                             |  1 +
++ elf/elf.h                                   |  3 +++
++ sysdeps/unix/sysv/linux/aarch64/dl-auxv.h   | 25 +++++++++++++++++++++++++
++ sysdeps/unix/sysv/linux/aarch64/dl-sysdep.c |  5 +++++
++ 4 files changed, 34 insertions(+)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/dl-auxv.h
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/dl-sysdep.c
++
++diff --git a/elf/dl-sysdep.c b/elf/dl-sysdep.c
++index eaa7155..88b7dd7 100644
++--- a/elf/dl-sysdep.c
+++++ b/elf/dl-sysdep.c
++@@ -307,6 +307,7 @@ _dl_show_auxv (void)
++ 	  [AT_SYSINFO_EHDR - 2] =	{ "SYSINFO_EHDR: 0x", hex },
++ 	  [AT_RANDOM - 2] =		{ "RANDOM:       0x", hex },
++ 	  [AT_HWCAP2 - 2] =		{ "HWCAP2:       0x", hex },
+++	  [AT_ARM64_MIDR - 2] =		{ "MIDR:         0x", hex },
++ 	};
++       unsigned int idx = (unsigned int) (av->a_type - 2);
++ 
++diff --git a/elf/elf.h b/elf/elf.h
++index 15f5a75..c05bc23 100644
++--- a/elf/elf.h
+++++ b/elf/elf.h
++@@ -1058,6 +1058,9 @@ typedef struct
++ #define AT_L2_CACHESHAPE	36
++ #define AT_L3_CACHESHAPE	37
++ 
+++/* AARCH64 MIDR system register. */
+++#define AT_ARM64_MIDR		38
+++
++ /* Note section contents.  Each entry in the note section begins with
++    a header of a fixed form.  */
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/dl-auxv.h b/sysdeps/unix/sysv/linux/aarch64/dl-auxv.h
++new file mode 100644
++index 0000000..290753d
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/dl-auxv.h
++@@ -0,0 +1,25 @@
+++/* Auxiliary vector processing for Linux/AARCH64.
+++   Copyright (C) 2015 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library.  If not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++
+++extern int __libc_arm64_midr;
+++
+++#define DL_PLATFORM_AUXV				\
+++      case AT_ARM64_MIDR:				\
+++	__libc_arm64_midr = av->a_un.a_val;		\
+++	break;
++diff --git a/sysdeps/unix/sysv/linux/aarch64/dl-sysdep.c b/sysdeps/unix/sysv/linux/aarch64/dl-sysdep.c
++new file mode 100644
++index 0000000..ca3ec28
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/dl-sysdep.c
++@@ -0,0 +1,5 @@
+++#include "dl-auxv.h"
+++
+++int __libc_arm64_midr = -1;
+++
+++#include <sysdeps/unix/sysv/linux/dl-sysdep.c>
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0025-Fix-ILP32-warning.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0025-Fix-ILP32-warning.patch
+new file mode 100644
+index 0000000..18f54da
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0025-Fix-ILP32-warning.patch
+@@ -0,0 +1,54 @@
++From b1262a17de89d604d2f58314cd1e066acf63550d Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:09 +0300
++Subject: [PATCH 25/27] Fix ILP32 warning
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/jmpbuf-unwind.h                  | 2 +-
++ sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h | 2 +-
++ sysdeps/unix/sysv/linux/generic/brk.c            | 2 +-
++ 3 files changed, 3 insertions(+), 3 deletions(-)
++
++diff --git a/sysdeps/aarch64/jmpbuf-unwind.h b/sysdeps/aarch64/jmpbuf-unwind.h
++index 3e0a37d..5603828 100644
++--- a/sysdeps/aarch64/jmpbuf-unwind.h
+++++ b/sysdeps/aarch64/jmpbuf-unwind.h
++@@ -27,7 +27,7 @@
++   ((void *) (address) < (void *) demangle (jmpbuf[JB_SP]))
++ 
++ #define _JMPBUF_CFA_UNWINDS_ADJ(jmpbuf, context, adj) \
++-  _JMPBUF_UNWINDS_ADJ (jmpbuf, (void *) _Unwind_GetCFA (context), adj)
+++  _JMPBUF_UNWINDS_ADJ (jmpbuf, (void *)(size_t) _Unwind_GetCFA (context), adj)
++ 
++ #define _JMPBUF_UNWINDS_ADJ(_jmpbuf, _address, _adj) \
++   ((uintptr_t) (_address) - (_adj) < _jmpbuf_sp (_jmpbuf) - (_adj))
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h b/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
++index a579501..ee54222 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
++@@ -19,7 +19,7 @@
++ #include <sys/ucontext.h>
++ 
++ #define SIGCONTEXT siginfo_t *_si, struct ucontext *
++-#define GET_PC(ctx) ((void *) (ctx)->uc_mcontext.pc)
+++#define GET_PC(ctx) ((void *) (size_t) (ctx)->uc_mcontext.pc)
++ 
++ /* There is no reliable way to get the sigcontext unless we use a
++    three-argument signal handler.  */
++diff --git a/sysdeps/unix/sysv/linux/generic/brk.c b/sysdeps/unix/sysv/linux/generic/brk.c
++index 1b84004..f369e06 100644
++--- a/sysdeps/unix/sysv/linux/generic/brk.c
+++++ b/sysdeps/unix/sysv/linux/generic/brk.c
++@@ -33,7 +33,7 @@ __brk (void *addr)
++ {
++   INTERNAL_SYSCALL_DECL (err);
++ 
++-  __curbrk = (void *) INTERNAL_SYSCALL (brk, err, 1, addr);
+++  __curbrk = (void *) (size_t) INTERNAL_SYSCALL (brk, err, 1, addr);
++   if (__curbrk < addr)
++     {
++       __set_errno (ENOMEM);
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0026-Change-type-of-__align-to-long-long.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0026-Change-type-of-__align-to-long-long.patch
+new file mode 100644
+index 0000000..e9a8b10
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0026-Change-type-of-__align-to-long-long.patch
+@@ -0,0 +1,26 @@
++From 1e1c06dfcf6bed363235d636ccb3b60bc4addc6f Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:10 +0300
++Subject: [PATCH 26/27] Change type of __align to long long
++
++So that ILP32 is aligned to 64bits.
++
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/nptl/bits/semaphore.h | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/sysdeps/aarch64/nptl/bits/semaphore.h b/sysdeps/aarch64/nptl/bits/semaphore.h
++index 3cc5b37..3fe6047 100644
++--- a/sysdeps/aarch64/nptl/bits/semaphore.h
+++++ b/sysdeps/aarch64/nptl/bits/semaphore.h
++@@ -31,5 +31,5 @@
++ typedef union
++ {
++   char __size[__SIZEOF_SEM_T];
++-  long int __align;
+++  long long int __align;
++ } sem_t;
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch
+new file mode 100644
+index 0000000..69723ab
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch
+@@ -0,0 +1,55 @@
++From 48e8688af78c4fbbc467c2c7d59e2581e0bb4b56 Mon Sep 17 00:00:00 2001
++From: Andrew Pinski <apinski@cavium.com>
++Date: Tue, 21 Jun 2016 08:07:11 +0300
++Subject: [PATCH 27/27] Fix PTRDIFF_MIN/PTRDIFF_MIN and PTRDIFF_MIN for ILP32.
++
++Signed-off-by: Andrew Pinski <apinski@cavium.com>
++Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
++---
++ sysdeps/aarch64/bits/wordsize.h | 8 +++-----
++ sysdeps/generic/stdint.h        | 9 +++++++--
++ 2 files changed, 10 insertions(+), 7 deletions(-)
++
++diff --git a/sysdeps/aarch64/bits/wordsize.h b/sysdeps/aarch64/bits/wordsize.h
++index 3d5a79d..18697e2 100644
++--- a/sysdeps/aarch64/bits/wordsize.h
+++++ b/sysdeps/aarch64/bits/wordsize.h
++@@ -19,12 +19,10 @@
++ # define __WORDSIZE	64
++ #else
++ # define __WORDSIZE	32
+++# define __WORDSIZE32_SIZE_ULONG       1
+++# define __WORDSIZE32_PTRDIFF_LONG 1
++ #endif
++ 
++-/* LP64 and ILP32s ABI uses a 64bit time_t.
++-   This allows aarch32 and AARCH64 applications
+++/* This allows ILP32 and AARCH64 applications
++    both access utmp. */
++ #define __WORDSIZE_TIME64_COMPAT32	1
++-
++-/* LP64 and ILP32 use the 64bit system call interface. */
++-#define __SYSCALL_WORDSIZE 64
++diff --git a/sysdeps/generic/stdint.h b/sysdeps/generic/stdint.h
++index 4427627..05f895a 100644
++--- a/sysdeps/generic/stdint.h
+++++ b/sysdeps/generic/stdint.h
++@@ -248,8 +248,13 @@ typedef unsigned long long int	uintmax_t;
++ #  define PTRDIFF_MIN		(-9223372036854775807L-1)
++ #  define PTRDIFF_MAX		(9223372036854775807L)
++ # else
++-#  define PTRDIFF_MIN		(-2147483647-1)
++-#  define PTRDIFF_MAX		(2147483647)
+++#  ifdef __WORDSIZE32_PTRDIFF_LONG
+++#    define PTRDIFF_MIN		(-2147483647L-1)
+++#    define PTRDIFF_MAX		(2147483647L)
+++#  else
+++#    define PTRDIFF_MIN		(-2147483647-1)
+++#    define PTRDIFF_MAX		(2147483647)
+++#  endif
++ # endif
++ 
++ /* Limits of `sig_atomic_t'.  */
++-- 
++1.9.1
++
+diff --git a/meta/recipes-core/glibc/glibc_2.23.bb b/meta/recipes-core/glibc/glibc_2.23.bb
+index b71018b..d0ee618 100644
+--- a/meta/recipes-core/glibc/glibc_2.23.bb
++++ b/meta/recipes-core/glibc/glibc_2.23.bb
+@@ -39,7 +39,7 @@ SRC_URI = "${GLIBC_GIT_URI};branch=${SRCBRANCH};name=glibc \
+            file://CVE-2016-3706.patch \
+            file://CVE-2016-4429.patch \
+ "
+-
++include ilp32_patches.inc
+ SRC_URI += "\
+            file://etc/ld.so.conf \
+            file://generate-supported.mk \
+diff --git a/meta/recipes-core/glibc/ilp32_patches.inc b/meta/recipes-core/glibc/ilp32_patches.inc
+new file mode 100644
+index 0000000..8f71401
+--- /dev/null
++++ b/meta/recipes-core/glibc/ilp32_patches.inc
+@@ -0,0 +1,27 @@
++SRC_URI += "file://ilp32_patches/0001-Fix-utmp-struct-for-compatibility-reasons.patch"
++SRC_URI += "file://ilp32_patches/0002-Add-header-guards-to-sysdep.h-headers.patch"
++SRC_URI += "file://ilp32_patches/0003-Add-dynamic-ILP32-AARCH64-relocations-to-elf.h.patch"
++SRC_URI += "file://ilp32_patches/0004-Add-PTR_REG-PTR_LOG_SIZE-and-PTR_SIZE.-Use-it-in-LDS.patch"
++SRC_URI += "file://ilp32_patches/0005-Use-PTR_REG-in-crti.S.patch"
++SRC_URI += "file://ilp32_patches/0006-Use-PTR_REG-PTR_SIZE-PTR_SIZE_LOG-in-dl-tlsesc.S.patch"
++SRC_URI += "file://ilp32_patches/0007-Use-PTR_-macros-in-dl-trampoline.S.patch"
++SRC_URI += "file://ilp32_patches/0008-Use-PTR_-in-start.S.patch"
++SRC_URI += "file://ilp32_patches/0009-Use-PTR_REG-in-getcontext.S.patch"
++SRC_URI += "file://ilp32_patches/0010-Detect-ILP32-in-configure-scripts.patch"
++SRC_URI += "file://ilp32_patches/0011-Syscalls-for-ILP32-are-passed-always-via-64bit-value.patch"
++SRC_URI += "file://ilp32_patches/0012-Add-ILP32-support-to-elf_machine_load_address.patch"
++SRC_URI += "file://ilp32_patches/0013-Set-up-wordsize-for-ILP32.patch"
++SRC_URI += "file://ilp32_patches/0014-Add-ILP32-to-makefiles.patch"
++SRC_URI += "file://ilp32_patches/0015-Add-support-to-ldconfig-for-ILP32-and-libilp32.patch"
++SRC_URI += "file://ilp32_patches/0016-Add-ILP32-ld.so-to-the-known-interpreter-names.patch"
++SRC_URI += "file://ilp32_patches/0017-Add-ldd-rewrite.sed-so-that-ilp32-ld.so-can-be-found.patch"
++SRC_URI += "file://ilp32_patches/0018-Add-kernel_sigaction.h-for-AARCH64-ILP32.patch"
++SRC_URI += "file://ilp32_patches/0019-Add-typesizes.h-for-ILP32.patch"
++SRC_URI += "file://ilp32_patches/0020-Make-lp64-and-ilp32-directories.patch"
++SRC_URI += "file://ilp32_patches/0021-ILP32-introduce-syscalls-that-pass-off_t.patch"
++SRC_URI += "file://ilp32_patches/0022-ILP32-support-stat-syscall-family.patch"
++SRC_URI += "file://ilp32_patches/0023-delouse-input-arguments-in-system-functions.patch"
++SRC_URI += "file://ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch"
++SRC_URI += "file://ilp32_patches/0025-Fix-ILP32-warning.patch"
++SRC_URI += "file://ilp32_patches/0026-Change-type-of-__align-to-long-long.patch"
++SRC_URI += "file://ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch"
+-- 
+2.5.0
+
