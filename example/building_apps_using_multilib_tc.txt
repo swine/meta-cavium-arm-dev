@@ -1,0 +1,254 @@
+
+Building 32/64 bit applications using yocto multilib
+====================================================
+
+1. What is supported ?
+2. How to setup the build system
+3. How to build same application as 32bit and 64bit.
+ How to add a dependency support.
+
+4. Copying the application in rootfs.
+
+
+1. What is supported
+====================
+a) Userland default applications are 64bit along with separate 32bit and 64bit
+ libraries to run 32 bit and 64bit applications.
+
+b) bitbake core-image-minimal will create a rootfs which will have lib and
+libilp32 folders containing 32bit and 64bit versions of say crt1.o
+
+c) Yocto generates toolchain to cross compile applications. No external
+toolchain is required.
+
+
+2. How to setup the build system
+================================
+
+2.1 Enable multilib support in local.conf
+----------------------------------------- 
+MACHINE = "cavium-thunderx-81xx"
+
+PREFERRED_VERSION_linux-thunderx-81xx = "4.4"
+PREFERRED_PROVIDER_virtual/kernel = "linux-thunderx-81xx"
+
+require conf/multilib.conf
+MULTILIBS = "multilib:lib32"
+DEFAULTTUNE_virtclass-multilib-lib32 = "aarch64_ilp32"
+DEFAULTTUNE_virtclass-multilib-lib64 = "aarch64"
+
+2.2 Create base core-image-minimal
+-------------------------------------
+bitbake core-image-minimal
+
+2.3 Source environment files for building 32/64bit applications
+---------------------------------------------------------------
+The environment files below are dependent on the yocto build generated
+sysroot and cross compile tool chains.
+
+setenv_ilp32.sh
+-----------------------------------------------------------
+export YOCTO_BUILD_DIR=$ROOT_DIR/poky/build/
+export TARGET=aarch64-pokymllib32-linux-gnuilp32
+export CROSS_COMPILE=${YOCTO_BUILD_DIR}/tmp/sysroots/x86_64-linux/usr/bin/${TARGET}/${TARGET}-
+export SYSROOT=${YOCTO_BUILD_DIR}/tmp/sysroots/lib32-cavium-thunderx-81xx
+export CC="${CROSS_COMPILE}gcc -mabi=ilp32  --sysroot=${SYSROOT}"
+export AR=${CROSS_COMPILE}ar
+export AS=${CROSS_COMPILE}as
+export LD="${CROSS_COMPILE}ld --sysroot=${SYSROOT}"
+export STRIP=${CROSS_COMPILE}strip
+export CONFIGURE_FLAGS="--target=${TARGET} --host=${TARGET} --build=x86_64-linux --with-libtool-sysroot=$SYSROOT"
+export LDFLAGS="-Wl,-O1 -Wl,--hash-style=gnu -Wl,--as-needed"
+export CFLAGS="-mabi=ilp32 -O2 "
+export ARCH=aarch64_ilp32
+
+setenv_lp64.sh
+-----------------------------------------------------------
+export YOCTO_BUILD_DIR=$ROOT_DIR/poky/build/
+export TARGET=aarch64-poky-linux
+export CROSS_COMPILE=${YOCTO_BUILD_DIR}/tmp/sysroots/x86_64-linux/usr/bin/${TARGET}/${TARGET}-
+export SYSROOT=${YOCTO_BUILD_DIR}/tmp/sysroots/cavium-thunderx-81xx
+export CC="${CROSS_COMPILE}gcc  --sysroot=${SYSROOT}"
+export AR=${CROSS_COMPILE}ar
+export AS=${CROSS_COMPILE}as
+export LD="${CROSS_COMPILE}ld --sysroot=${SYSROOT}"
+export STRIP=${CROSS_COMPILE}strip
+export CONFIGURE_FLAGS="--target=${TARGET} --host=${TARGET} --build=x86_64-linux --with-libtool-sysroot=$SYSROOT"
+export LDFLAGS="-Wl,-O1 -Wl,--hash-style=gnu -Wl,--as-needed"
+export CFLAGS=" -O2 "
+export ARCH=arm64
+
+3. Building 32bit/64bit from same source
+
+3.1 Building a basic application
+
+void main()
+{
+	void *p;
+	printf("Size of int=%d  long=%d ptr=%d \r\n", sizeof(int),
+		sizeof(long), sizeof(p));
+}
+
+64bit:
+$source ~/setenv_lp64.sh
+$CC file.c -o file.out
+
+32bit:
+$source ~/setenv_ilp32.sh
+$CC file.c -o file.out
+
+3.2 Building an application with openssl support
+------------------------------------------------
+ #include <stdio.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #if defined(__APPLE__)
+  #  define COMMON_DIGEST_FOR_OPENSSL
+  #  include <CommonCrypto/CommonDigest.h>
+  #  define SHA1 CC_SHA1
+  #else
+  #  include <openssl/md5.h>
+#endif
+
+  char *str2md5(const char *str, int length) {
+        int n;
+        MD5_CTX c;
+        unsigned char digest[16];
+        char *out = (char*)malloc(33);
+
+        MD5_Init(&c);
+
+        while (length > 0) {
+            if (length > 512) {
+                MD5_Update(&c, str, 512);
+            } else {
+                MD5_Update(&c, str, length);
+            }
+            length -= 512;
+            str += 512;
+        }
+
+        MD5_Final(digest, &c);
+
+        for (n = 0; n < 16; ++n) {
+            snprintf(&(out[n*2]), 16*2, "%02x", (unsigned int)digest[n]);
+        }
+
+        return out;
+  }
+
+      int main(int argc, char **argv) {
+            char *output = str2md5("hello", strlen("hello"));
+            printf("%s\n", output);
+            free(output);
+            return 0;
+        }
+
+$CC test_opssl.c -lssl -lcrypto
+
+3.2.1 Adding dependency
+---------------------------------
+Since kexec-tools have a dependency on openssl, adding below in local.conf will
+add zlib libraries in sysroot.
+
+IMAGE_INSTALL_append = " openssl"
+IMAGE_INSTALL_append = " lib32-openssl"
+
+3.3 Building Kexec-tools
+------------------------------
+
+3.3.1 Adding dependency
+---------------------------------
+Since kexec-tools have a dependency on zlib, adding below in local.conf will
+add zlib libraries in sysroot.
+
+IMAGE_INSTALL_append = " zlib"
+IMAGE_INSTALL_append = " lib32-zlib"
+
+3.3.2 Building kexec for lp64
+------------------------------
+$source ~/setenv_lp64.sh
+$./configure --host=${TARGET} 
+$make
+
+$ file build/sbin/kexec
+build/sbin/kexec:        ELF 64-bit LSB  executable, ARM aarch64, version 1 (SYSV),
+
+
+3.3.2 Building kexec for ilp32
+------------------------------
+$source ~/setenv_ilp32.sh
+$./configure --host=${TARGET} 
+$make
+
+$ file build/sbin/kexec
+build/sbin/kexec:        ELF 32-bit LSB  executable, ARM aarch64, version 1 (SYSV),
+
+3.4 Building and Running apache webserver
+-----------------------------------------
+
+3.4.1 Updating the dependency in yocto core-image
+-------------------------------------------------
+Update local.conf as follows
+
+CORE_IMAGE_EXTRA_INSTALL_append += " openssl"
+IMAGE_INSTALL_append = " lib32-openssl"
+
+IMAGE_INSTALL_append = " zlib"
+IMAGE_INSTALL_append = " lib32-zlib"
+
+IMAGE_INSTALL_append = " lib32-libbsd"
+
+IMAGE_INSTALL_append = " libgcrypt"
+IMAGE_INSTALL_append = " lib32-libgcrypt"
+
+IMAGE_INSTALL_append = " libpcre"
+IMAGE_INSTALL_append = " lib32-libpcre"
+
+IMAGE_INSTALL_append = " libpthread-stubs"
+IMAGE_INSTALL_append = " lib32-libpthread-stubs"
+
+bitbake core-image-minimal
+
+3.4.2 Compiling apache
+-----------------------------------------
+a. Git clone apache from https://github.com/apache/httpd.git
+
+b. Download apr files in srclib/
+wget http://www.trieuvan.com/apache//apr/apr-1.5.2.tar.gz
+wget http://mirror.olnevhost.net/pub/apache//apr/apr-util-1.5.4.tar.gz
+
+c. Untar and rename apr-1.5.2 as apr
+d. Untar and rename apr-util-1.5.4 as apr-util
+e. Patch httpd/srclib/apr/include/apr.h.in
+-#define APR_HAVE_IOVEC          @have_iovec@
++#define APR_HAVE_IOVEC          1
+f. source the setenv_ilp32.sh file
+g. in httpd directory run configure as 
+ ./configure --host=$CONFIGURE_FLAGS ac_cv_file__dev_zero=yes ac_cv_func_setpgrp_void=yes apr_cv_tcp_nodelay_with_cork=yes have_iovec=0 --prefix=/home/manish/INSTALL --with-included-apr have_iovec=1 LIBS="-lpthread" -enable-so apr_cv_process_shared_works=set ap_cv_void_ptr_lt_long=no ac_cv_sizeof_struct_iovec=8  --with-mpm=prefork
+
+h. make ; make install
+run file command to see if the file is 32bit
+
+./srclib/apr/tools
+gcc -Wall -O2 -DCROSS_COMPILE gen_test_char.c -s -o gen_test_char 
+
+$file ~/INSTALL/bin/httpd
+/home/manish/INSTALL/bin/httpd: ELF 32-bit LSB  executable, ARM aarch64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 3.19.0, BuildID[sha1]=7bb55ad69dca6996be483b3364422cbb098cb20b, not stripped
+
+
+i. mount core-image-minimal-cavium-thunderx-81xx.ext4 on say /mnt
+j. rsync $SYSROOT with /mnt.
+k. Copy installed httpd in /home/manish/INSTALL on /mnt with say the same
+path.
+l. unmount and load the rootfile system on 81xx board.
+m. Boot and run ./bin/apachectl -k from install folder. 
+n. enter board ip in browser to see It works!
+
+
+4. Copying the application in rootfs.
+--------------------------------------
+The applications can later be copied to the running system / rootfs.
+Dependent libraries can be copied by rsync the toolchain sysroot into rootfs.
+See step 3.4.2 above
+
