@@ -1,0 +1,39 @@
+From b13920c384f3fd2e6fe64ec13f77b1a316c9b82d Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Thu, 15 Dec 2016 23:52:03 -0800
+Subject: [PATCH] Disable gmp
+
+---
+ meta/recipes-support/gmp/gmp.inc      | 2 +-
+ meta/recipes-support/gmp/gmp_6.1.0.bb | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/meta/recipes-support/gmp/gmp.inc b/meta/recipes-support/gmp/gmp.inc
+index abac8cf..23e83da 100644
+--- a/meta/recipes-support/gmp/gmp.inc
++++ b/meta/recipes-support/gmp/gmp.inc
+@@ -5,7 +5,7 @@ SECTION = "devel"
+ 
+ inherit autotools texinfo
+ 
+-PACKAGECONFIG ??= ""
++PACKAGECONFIG ??= "--disable-assembly"
+ PACKAGECONFIG[readline] = "--with-readline=yes,--with-readline=no,readline"
+ 
+ ARM_INSTRUCTION_SET_armv4 = "arm"
+diff --git a/meta/recipes-support/gmp/gmp_6.1.0.bb b/meta/recipes-support/gmp/gmp_6.1.0.bb
+index de827f5..e918c6d 100644
+--- a/meta/recipes-support/gmp/gmp_6.1.0.bb
++++ b/meta/recipes-support/gmp/gmp_6.1.0.bb
+@@ -19,7 +19,7 @@ SRC_URI[sha256sum] = "498449a994efeba527885c10405993427995d3f86b8768d8cdf8d9dd7c
+ 
+ acpaths = ""
+ 
+-EXTRA_OECONF += " --enable-cxx=detect"
++EXTRA_OECONF += " --enable-cxx=detect --disable-assembly"
+ 
+ PACKAGES =+ "libgmpxx"
+ FILES_libgmpxx = "${libdir}/libgmpxx${SOLIBS}"
+-- 
+2.5.0
+
