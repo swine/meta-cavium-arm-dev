@@ -1,0 +1,82 @@
+From 6aefcc18056fc2d0f7b44884507a542d56b52844 Mon Sep 17 00:00:00 2001
+From: Andrew Pinski <apinski@cavium.com>
+Date: Mon, 25 Jan 2016 16:08:03 -0800
+Subject: [PATCH 1/7] 2016-01-25 Andrew Pinski <apinski@cavium.com>
+
+        * aarch64-linux-nat.c (AARCH64_DEBUG_ARCH_V81): New define.
+        (aarch64_linux_get_debug_reg_capacity): Allow for AARCH64_DEBUG_ARCH_V81
+        also.
+        * gdbserver/linux-aarch64-low.c (AARCH64_DEBUG_ARCH_V81): New define.
+        (aarch64_arch_setup): Allow for AARCH64_DEBUG_ARCH_V81 also.
+---
+ gdb/aarch64-linux-nat.c           | 7 +++++--
+ gdb/gdbserver/linux-aarch64-low.c | 7 +++++--
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/gdb/aarch64-linux-nat.c b/gdb/aarch64-linux-nat.c
+index 9959b81..665b0d3 100644
+--- a/gdb/aarch64-linux-nat.c
++++ b/gdb/aarch64-linux-nat.c
+@@ -109,6 +109,7 @@ get_thread_id (ptid_t ptid)
+ 
+ /* Macro for the expected version of the ARMv8-A debug architecture.  */
+ #define AARCH64_DEBUG_ARCH_V8 0x6
++#define AARCH64_DEBUG_ARCH_V81 0x7
+ 
+ /* Number of hardware breakpoints/watchpoints the target supports.
+    They are initialized with values obtained via the ptrace calls
+@@ -770,7 +771,8 @@ aarch64_linux_get_debug_reg_capacity (void)
+ 
+   /* Get hardware watchpoint register info.  */
+   if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_HW_WATCH, &iov) == 0
+-      && AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8)
++      && (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8
++         || AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V81))
+     {
+       aarch64_num_wp_regs = AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info);
+       if (aarch64_num_wp_regs > AARCH64_HWP_MAX_NUM)
+@@ -790,7 +792,8 @@ aarch64_linux_get_debug_reg_capacity (void)
+ 
+   /* Get hardware breakpoint register info.  */
+   if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_HW_BREAK, &iov) == 0
+-      && AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8)
++      && (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8
++          || AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V81))
+     {
+       aarch64_num_bp_regs = AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info);
+       if (aarch64_num_bp_regs > AARCH64_HBP_MAX_NUM)
+diff --git a/gdb/gdbserver/linux-aarch64-low.c b/gdb/gdbserver/linux-aarch64-low.c
+index 8a30b00..c9d4aca 100644
+--- a/gdb/gdbserver/linux-aarch64-low.c
++++ b/gdb/gdbserver/linux-aarch64-low.c
+@@ -1211,6 +1211,7 @@ aarch64_linux_prepare_to_resume (struct lwp_info *lwp)
+ #define AARCH64_DEBUG_NUM_SLOTS(x) ((x) & 0xff)
+ #define AARCH64_DEBUG_ARCH(x) (((x) >> 8) & 0xff)
+ #define AARCH64_DEBUG_ARCH_V8 0x6
++#define AARCH64_DEBUG_ARCH_V81 0x7
+ 
+ static void
+ aarch64_arch_setup (void)
+@@ -1227,7 +1228,8 @@ aarch64_arch_setup (void)
+ 
+   /* Get hardware watchpoint register info.  */
+   if (ptrace (PTRACE_GETREGSET, pid, NT_ARM_HW_WATCH, &iov) == 0
+-      && AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8)
++      && (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8
++          || AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V81))
+     {
+       aarch64_num_wp_regs = AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info);
+       if (aarch64_num_wp_regs > AARCH64_HWP_MAX_NUM)
+@@ -1247,7 +1249,8 @@ aarch64_arch_setup (void)
+ 
+   /* Get hardware breakpoint register info.  */
+   if (ptrace (PTRACE_GETREGSET, pid, NT_ARM_HW_BREAK, &iov) == 0
+-      && AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8)
++      && (AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V8
++          || AARCH64_DEBUG_ARCH (dreg_state.dbg_info) == AARCH64_DEBUG_ARCH_V81))
+     {
+       aarch64_num_bp_regs = AARCH64_DEBUG_NUM_SLOTS (dreg_state.dbg_info);
+       if (aarch64_num_bp_regs > AARCH64_HBP_MAX_NUM)
+-- 
+2.5.0
+

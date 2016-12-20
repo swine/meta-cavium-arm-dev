@@ -1,0 +1,32 @@
+From 947191698526def08031bed56c5fe34b3a7520e8 Mon Sep 17 00:00:00 2001
+From: Andrew Pinski <apinski@cavium.com>
+Date: Mon, 10 Oct 2016 18:10:36 -0700
+Subject: [PATCH 6/7] Fix is_elf64 order, was using it before it was
+ initialized.
+
+Signed-off-by: Andrew Pinski <apinski@cavium.com>
+---
+ gdb/gdbserver/linux-aarch64-low.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gdb/gdbserver/linux-aarch64-low.c b/gdb/gdbserver/linux-aarch64-low.c
+index 2bbfb13..debd52d 100644
+--- a/gdb/gdbserver/linux-aarch64-low.c
++++ b/gdb/gdbserver/linux-aarch64-low.c
+@@ -1227,11 +1227,11 @@ aarch64_arch_setup (void)
+ 
+   pid = lwpid_of (current_thread);
+ 
++  is_elf64 = linux_pid_exe_is_elf_64_file (pid, &machine);
++
+   if (sizeof (void *) == 4 && is_elf64)
+     error (_("Can't debug 64-bit process with 32-bit GDBserver"));
+ 
+-  is_elf64 = linux_pid_exe_is_elf_64_file (pid, &machine);
+-
+   if (machine == EM_AARCH64 && is_elf64)
+     tdesc = tdesc_aarch64;
+   else if (machine == EM_AARCH64 && !is_elf64)
+-- 
+2.5.0
+

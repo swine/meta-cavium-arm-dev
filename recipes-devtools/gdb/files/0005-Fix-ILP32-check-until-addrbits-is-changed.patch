@@ -1,0 +1,26 @@
+From 5fe293faacdf046f6841faeca5c8995250ace343 Mon Sep 17 00:00:00 2001
+From: Andrew Pinski <apinski@cavium.com>
+Date: Thu, 1 Sep 2016 00:46:26 -0700
+Subject: [PATCH 5/7] Fix ILP32 check until addrbits is changed.
+
+Signed-off-by: Andrew Pinski <apinski@cavium.com>
+---
+ gdb/aarch64-tdep.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gdb/aarch64-tdep.c b/gdb/aarch64-tdep.c
+index 9311cec..fbaa8d9 100644
+--- a/gdb/aarch64-tdep.c
++++ b/gdb/aarch64-tdep.c
+@@ -2614,7 +2614,7 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
+ 
+   if (info.abfd
+       && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour
+-      && bfd_arch_bits_per_address (info.abfd) == 32)
++      && elf_elfheader (info.abfd)->e_ident[EI_CLASS] == ELFCLASS32)
+     ilp32 = TRUE;
+ 
+   /* Ensure we always have a target descriptor.  */
+-- 
+2.5.0
+
