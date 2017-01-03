@@ -1,0 +1,16 @@
+How to generate FIT Image
+--------------------------
+
+1. In local.conf, 
+ Set the patch of generated device tree binary as
+	81XX_DTB_FILE = "<Generated_Dtb>"
+
+ Set the path of its file
+	81XX_ITS_FILE = "<ROOT>/poky_2_1/meta-cavium-arm//recipes-core/images/files/81xx.its"
+
+2. Generate itb file
+ bitbake -c buildFIT core-image-minimal
+
+3. ITS file generated in deploy directory 
+
+	tmp/deploy/images/cavium-thunderx-81xx/cavium-thunderx-81xx.itb
