@@ -24,7 +24,6 @@ do_compile () {
 	unset LDFLAGS
 	unset CFLAGS
 	unset CPPFLAGS
-	echo ${CAVIUM_BOARD_NAME} > ~/a.txt
 	make t81_config
 	oe_runmake \
 		CFLAGS="-mlittle-endian -I${S}/csr/include -mabi=lp64" u-boot-nodtb.bin
