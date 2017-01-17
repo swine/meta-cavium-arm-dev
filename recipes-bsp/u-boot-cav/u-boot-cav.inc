@@ -6,8 +6,10 @@ LICENSE = "GPL"
 S = "${WORKDIR}/u-boot"
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 MKBFS = "${CAVIUM_UBOOT_SCRIPTS}/make-bootfs.py"
+FIP_CREATE = "${CAVIUM_UBOOT_SCRIPTS}/fip_create"
 FATFS_TOOL = "${CAVIUM_UBOOT_SCRIPTS}/fatfs-tool"
 BOOTFS_IMAGE = "${S}/${CAVIUM_BOARD_NAME}-firmware-uboot.img"
+FIP_IMAGE = "${S}/${CAVIUM_BOARD_NAME}-fip.img"
 DEPLOY_BOOTFS_IMAGE = "${DEPLOYDIR}/${CAVIUM_BOARD_NAME}-firmware.img"
 DTB_DIR = "${CAVIUM_UBOOT_SCRIPTS}"
 
@@ -23,16 +25,15 @@ do_compile () {
 	unset CFLAGS
 	unset CPPFLAGS
 	echo ${CAVIUM_BOARD_NAME} > ~/a.txt
-	make thunderx_81xx_config
+	make t81_config
 	oe_runmake \
 		CFLAGS="-mlittle-endian -I${S}/csr/include -mabi=lp64" u-boot-nodtb.bin
 }
 
 do_deploy () {
-	${MKBFS} --uboot u-boot-nodtb.bin -f ${BOOTFS_IMAGE}
+        ${FIP_CREATE} --dump --bl2 ${ATFBL2_IMAGE} --bl31 ${ATFBL31_IMAGE} --bl33 ${S}/u-boot-nodtb.bin ${FIP_IMAGE}
  	${FATFS_TOOL} -i ${BDK_IMAGE} cp ${DTB_DIR}/*.dtb /      
-	${MKBFS} --bs ${BDK_IMAGE} --bl0  ${ATFBS_IMAGE} -f ${BOOTFS_IMAGE} 
-	${MKBFS} --fip ${ATFFIP_IMAGE} --bl1 ${ATFBL1_IMAGE} -f ${BOOTFS_IMAGE}
+	${MKBFS} --bs ${BDK_IMAGE} --bl1 ${ATFBL1_IMAGE} --fip  ${FIP_IMAGE} -f ${BOOTFS_IMAGE} 
 
         cp ${BOOTFS_IMAGE} ${DEPLOY_BOOTFS_IMAGE}
 }
