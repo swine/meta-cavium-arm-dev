@@ -6,6 +6,7 @@ import binascii
 import struct
 import time
 import argparse
+import uuid
 
 # BDK image heade for Thunder is
 #   Offset  Size    Description
@@ -35,10 +36,8 @@ BDK_HEADER_MAGIC = "THUNDERX"
 BDK_HEADER_SIZE = 0x100
 
 ATF_HEADER_SIZE = 0x100
-ATF_BL0_OFFSET = 0x400000
-ATF_BL1_OFFSET = 0x500000
+ATF_BL1_OFFSET = 0x400000
 ATF_BL2_OFFSET = 0x580000
-ATF_BL32_OFFSET = 0x600000
 ATF_LINUX_OFFSET = 0x800000
 ATF_DTC_OFFSET = 0x700000
 ATF_TBL_OFFSET = 0x480000
@@ -64,6 +63,32 @@ def print_common_bdk(data, offset):
         print ' Image Name: ' +data[(offset+0x18) : (offset +0x18 +64)]
         print ' Version: ' + data[(offset + 0x58) : (offset + 0x58 + 32)]
 
+def print_common_fip_header(data, offset):
+    toc = struct.unpack_from('<IIQ', data, (offset))
+    print ' Name: ' + hex(toc[0])
+    print ' Serial: ' + hex(toc[1])
+    if (toc[2] != 0):
+        print ' Flags: ' + hex(toc[2])
+
+def print_common_fip_entry(data, offset, entry):
+    entry = struct.unpack_from('<16sQQQ', data, (offset + 0x10 + 0x28 * entry))
+    u = uuid.UUID(bytes_le = entry[0])
+    if (str(u) == '00000000-0000-0000-0000-000000000000'):
+        return False
+    print ' ----------------------------------------------'
+    print '  UUID: ' + str(u)
+    print '  Offset (inside FIP): ' + hex(entry[1])
+    print '  Offset (inside image): ' + hex(entry[1] + offset)
+    print '  Length: ' + str(entry[2]) + ' / ' + hex(entry[2])
+    if (entry[3] != 0):
+        print '  Flags: ' + hex(entry[3])
+    return True
+
+def print_fip_data(data, offset):
+    print_common_fip_header(data, offset)
+    entry = 0
+    while print_common_fip_entry(data, offset, entry):
+        entry += 1
 
 def print_bdk_headers(bootfs_data):
     print '***********************************************'
@@ -82,38 +107,28 @@ def print_bdk_headers(bootfs_data):
     print '***********************************************'
 
     print '***********************************************'
-    print ' ATF BOOT STUB'
+    print ' BDK: ATF BL1'
     print_common_bdk(bootfs_data,0x400000)
     print '***********************************************'
 
 
 def print_atf_headers(bootfs_data):
     print '***********************************************'
-    print ' ATF BL1'
-    print_common_atf(bootfs_data,0x480000)
-    print '***********************************************'
-    
-    print '***********************************************'
-    print ' ATF BL2'
+    print ' ATF FIP'
     print_common_atf(bootfs_data,0x480000+(1*0x100))
     print '***********************************************'
 
+def print_fip_headers(bootfs_data):
     print '***********************************************'
-    print 'BOOT LOADER'
-    print_common_atf(bootfs_data,0x480000+(2*0x100))
+    print ' FIP contents'
+    print_fip_data(bootfs_data,ATF_BL2_OFFSET)
     print '***********************************************'
-
-    print '***********************************************'
-    print ' LINUX'
-    print_common_atf(bootfs_data,0x480000+(3*0x100))
-    print '***********************************************'
-
-
 
 def print_bootfs(filename):
     bootfs_data = load_file(filename)
     print_bdk_headers(bootfs_data)
     print_atf_headers(bootfs_data)
+    print_fip_headers(bootfs_data)
 
 
 def pack(width, data):
@@ -193,21 +208,12 @@ def update_bdk_header(filename, image_name, image_version, data, offset):
 
 parser = argparse.ArgumentParser(description='argumnets for THUNDERX BOOTFS creationg.')
 parser.add_argument( '--bs', '--bdk-image', help='bdk boot strap image') 
-parser.add_argument('--bl0', '--aft-bs', help=' atf boot strap')
 parser.add_argument('--bl1', '--atf-bl1', help='atf boot stage 1')
-parser.add_argument('--fip', '--atf-fip', help='atf boot stage 2 and 3.1')
-parser.add_argument('-u', '--uboot', help='use u-boot as a bootloader')
-parser.add_argument('-e', '--uefi', help='use uefi as a bootloader')
+parser.add_argument('--fip', '--atf-fip', help='atf boot stage 2 and 3.1/3.2/3.3')
 parser.add_argument('-f', '--bootfs', required=True, help='file to be used for bootfs')
-parser.add_argument('-l','--linux', help='include linux image also in the bootfs')
-parser.add_argument('-d','--dtc', help='include linux device tree in the bootfs')
 parser.add_argument('-p','--printfs', help='print headers included in a given ThundeX bootfs', action='store_true')
 args = parser.parse_args()
 
-
-if(args.uefi and args.uboot):
-    print "Please supply only one bootloader(--uefi/--uboot)"
-    exit()
 
 if(args.printfs):
     print_bootfs(args.bootfs)
@@ -220,31 +226,10 @@ if(args.bs):
     bs_data = load_file(args.bs)
     write_file(args.bootfs, bs_data, 0)
 
-if(args.bl0):
-    bl0_data = load_file(args.bl0)
-    update_bdk_header(args.bootfs, 'ATF boot strap','1.0' ,bl0_data, ATF_BL0_OFFSET)
-
 if(args.bl1):
     bl1_data = load_file(args.bl1)
-    update_atf_header(args.bootfs, 'ATF stage 1',  bl1_data, ATF_BL1_OFFSET,0)
+    update_bdk_header(args.bootfs, 'ATF stage 1', '1.0',  bl1_data, ATF_BL1_OFFSET)
 
 if(args.fip):
     bl2_data = load_file(args.fip)
     update_atf_header(args.bootfs, 'ATF stage 2',  bl2_data, ATF_BL2_OFFSET,1)
-
-if(args.uboot):
-    uboot_data = load_file(args.uboot)
-    update_atf_header(args.bootfs, "U-BOOT",  uboot_data, ATF_BL32_OFFSET,2)
-
-if(args.uefi):
-    uefi_data = load_file(args.uefi)
-    update_atf_header(args.bootfs, "UEFI", uefi_data, ATF_BL32_OFFSET,2)
-
-if(args.linux):
-    linux_data = load_file(args.linux)
-    update_atf_header(args.bootfs, "LINUX", linux_data, ATF_LINUX_OFFSET,3)
-
-if(args.dtc):
-    dtc_data = load_file(args.dtc)
-    update_atf_header(args.bootfs, "Device Tree", dtc_data, ATF_DTC_OFFSET,4)
-	
