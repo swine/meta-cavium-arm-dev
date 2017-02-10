@@ -11,10 +11,10 @@ BOOTFS_IMAGE = "${S}/${CAVIUM_BOARD_NAME}-firmware-uboot.img"
 DEPLOY_BOOTFS_IMAGE = "${DEPLOYDIR}/${CAVIUM_BOARD_NAME}-firmware.img"
 DTB_DIR = "${81XX_BIN_FILE_PATH}/dtb"
 TMP_BDK_IMAGE = "${S}/tmp_bdk.bin"
-
+FIP_CREATE = "${CAVIUM_UBOOT_SCRIPTS}/fip_create"
 EXTRA_OEMAKE = 'CROSS_COMPILE=${TARGET_PREFIX} CC="${TARGET_PREFIX}gcc ${TOOLCHAIN_OPTIONS}" V=1'
 EXTRA_OEMAKE += 'HOSTCC="${BUILD_CC} ${BUILD_CFLAGS} ${BUILD_LDFLAGS}"'
-
+FIP_IMAGE= "${S}/fip_image.bin"
 inherit uboot-config deploy
 ##include board defines
 include u-boot-cav-${CAVIUM_BOARD_NAME}.inc
@@ -30,7 +30,6 @@ do_compile () {
 
 do_deploy () {
        cp ${BDK_IMAGE} ${TMP_BDK_IMAGE}
-       rm  ${FIP_IMAGE}
        ${FIP_CREATE} --dump --bl2 ${ATFBL2_IMAGE} --bl31 ${ATFBL31_IMAGE} --bl33 ${S}/u-boot-nodtb.bin ${FIP_IMAGE}
        ${FATFS_TOOL} -i ${TMP_BDK_IMAGE} cp ${DTB_DIR}/*.dtb /
        ${MKBFS} --bs ${TMP_BDK_IMAGE} --bl1 ${ATFBL1_IMAGE} --fip  ${FIP_IMAGE} -f ${BOOTFS_IMAGE}
