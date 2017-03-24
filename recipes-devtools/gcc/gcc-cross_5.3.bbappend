@@ -1,0 +1,1 @@
+GCCMULTILIB = "--disable-multilib"

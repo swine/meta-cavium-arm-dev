@@ -1,0 +1,11 @@
+--- gcc-5.2.0/config-ml.in	2014-06-13 07:32:29.000000000 -0700
++++ gcc-5.2.0/config-ml.in	2016-06-09 15:54:17.053083377 -0700
+@@ -175,7 +175,7 @@
+ unset scan_arguments
+ 
+ # Only do this if --enable-multilib.
+-if [ "${enable_multilib}" = yes ]; then
++if [ "${enable_multilib}" = yes -a "${DISABLE_MULTILIB}" != "yes" ]; then
+ 
+ # Compute whether this is the library's top level directory
+ # (ie: not a multilib subdirectory, and not a subdirectory like newlib/src).
