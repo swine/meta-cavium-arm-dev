@@ -1,0 +1,494 @@
+From daf897cfaa67d4bc3ed69059a18f126db1b52ebd Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Tue, 4 Apr 2017 02:56:27 -0700
+Subject: [PATCH 2/2] glibc: ilp32 syscall fix patches
+
+This patch fixes found while running ltplite
+
+Signed-off-by: Manish Jaggi <mjaggi@cavium.com>
+---
+ .../0028-ltplite-issues-fix-patch.patch            | 462 +++++++++++++++++++++
+ meta/recipes-core/glibc/ilp32_patches.inc          |   1 +
+ 2 files changed, 463 insertions(+)
+ create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
+
+diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
+new file mode 100644
+index 0000000..7f7584c
+--- /dev/null
++++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
+@@ -0,0 +1,462 @@
++From faa376eaef9308b3ad01a9991b5c67cfc9988e0e Mon Sep 17 00:00:00 2001
++From: Manish Jaggi <mjaggi@cavium.com>
++Date: Sat, 1 Apr 2017 19:06:29 -0700
++Subject: [PATCH] ltplite issues fix patch
++
++---
++ sysdeps/aarch64/dl-tlsdesc.S                       |  8 ++--
++ sysdeps/aarch64/sysdep.h                           |  2 +-
++ sysdeps/aarch64/tls-macros.h                       | 12 ++++++
++ sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h       |  2 +
++ sysdeps/unix/sysv/linux/aarch64/bits/statfs.h      | 34 +++++++--------
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c    |  2 +-
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c  |  2 +-
++ sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c     |  2 +-
++ sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c   |  2 +-
++ sysdeps/unix/sysv/linux/aarch64/sysdep.h           | 50 ++++++++--------------
++ sysdeps/unix/sysv/linux/bits/fcntl-linux.h         |  2 +-
++ sysdeps/unix/sysv/linux/generic/rename.c           |  6 +++
++ .../sysv/linux/generic/wordsize-32/getrlimit.c     | 43 +++++++++++++++++++
++ .../sysv/linux/generic/wordsize-32/setrlimit.c     | 48 +++++++++++++++++++++
++ 14 files changed, 157 insertions(+), 58 deletions(-)
++ create mode 100644 sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
++ create mode 100644 sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
++
++diff --git a/sysdeps/aarch64/dl-tlsdesc.S b/sysdeps/aarch64/dl-tlsdesc.S
++index 718dddf..86ea3fb 100644
++--- a/sysdeps/aarch64/dl-tlsdesc.S
+++++ b/sysdeps/aarch64/dl-tlsdesc.S
++@@ -97,8 +97,8 @@ _dl_tlsdesc_return_lazy:
++ 	   td->entry) and thus it synchronizes with the release store to
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++-	ldar	xzr, [x0]
++-	ldr	x0, [x0, #8]
+++	ldar	PTR_REG (zr), [x0]
+++	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	RET
++ 	cfi_endproc
++ 	.size	_dl_tlsdesc_return_lazy, .-_dl_tlsdesc_return_lazy
++@@ -126,8 +126,8 @@ _dl_tlsdesc_undefweak:
++ 	   td->entry) and thus it synchronizes with the release store to
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++-	ldar	xzr, [x0]
++ 	DELOUSE(0)
+++	ldar	PTR_REG (zr), [x0]
++ 	ldr	PTR_REG (0), [x0, #PTR_SIZE]
++ 	mrs	x1, tpidr_el0
++ 	sub	PTR_REG (0), PTR_REG (0), PTR_REG (1)
++@@ -191,7 +191,7 @@ _dl_tlsdesc_dynamic:
++ 	   td->entry) and thus it synchronizes with the release store to
++ 	   td->entry in _dl_tlsdesc_resolve_rela_fixup ensuring that the load
++ 	   from [x0,#8] here happens after the initialization of td->arg.  */
++-	ldar	xzr, [x0]
+++	ldar	PTR_REG (zr), [x0]
++ 	ldr	PTR_REG (1), [x0,#PTR_SIZE]
++ 	ldr	PTR_REG (0), [x4]
++ 	ldr	PTR_REG (3), [x1,#(PTR_SIZE * 2)]
++diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
++index c4ff5e7..321c939 100644
++--- a/sysdeps/aarch64/sysdep.h
+++++ b/sysdeps/aarch64/sysdep.h
++@@ -106,7 +106,7 @@
++ #define LDST_GLOBAL(OP, R, T,  EXPR)			\
++ 	adrp	x##T, :got:EXPR;			\
++ 	ldr	PTR_REG (T), [x##T, #:got_lo12:EXPR];	\
++-	OP	x##R, [x##T];
+++	OP	PTR_REG (R), [x##T];
++ 
++ /* Since C identifiers are not normally prefixed with an underscore
++    on this system, the asm identifier `syscall_error' intrudes on the
++diff --git a/sysdeps/aarch64/tls-macros.h b/sysdeps/aarch64/tls-macros.h
++index 2080a4d..7c9e3d4 100644
++--- a/sysdeps/aarch64/tls-macros.h
+++++ b/sysdeps/aarch64/tls-macros.h
++@@ -32,6 +32,7 @@
++ 	    "x30", "memory", "cc");			\
++      (int *) (__result); })
++ 
+++#ifdef __LP64__
++ #define TLS_IE(x)					\
++   ({ register unsigned long __result asm ("x0");	\
++      register unsigned long __t;			\
++@@ -41,6 +42,17 @@
++ 	  "add	%0, %0, %1"				\
++ 	  : "=r" (__result), "=r" (__t));		\
++      (int *) (__result); })
+++#else
+++#define TLS_IE(x)					\
+++  ({ register unsigned long __result asm ("x0");	\
+++     register unsigned long __t;			\
+++     asm ("mrs	%1, tpidr_el0; "			\
+++	  "adrp	%0, :gottprel:" #x "; "			\
+++	  "ldr	%w0, [%0, #:gottprel_lo12:" #x "]; "	\
+++	  "add	%0, %0, %1"				\
+++	  : "=r" (__result), "=r" (__t));		\
+++     (int *) (__result); })
+++#endif
++ 
++ #define TLS_LE(x)					\
++   ({ register unsigned long __result asm ("x0");	\
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h b/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
++index 7dcbe65..1717c35 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
++@@ -31,9 +31,11 @@
++ # define __O_LARGEFILE	0
++ #endif
++ 
+++#ifdef __LP64__
++ # define F_GETLK64	5
++ # define F_SETLK64	6
++ # define F_SETLKW64	7
+++#endif
++ 
++ struct flock
++   {
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h b/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
++index 81a8626..a2c37de 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
++@@ -34,35 +34,35 @@
++ 
++ struct statfs
++   {
++-    unsigned long long f_type;
++-    unsigned long long f_bsize;
+++    __SWORD_TYPE f_type;
+++    __SWORD_TYPE f_bsize;
++     __fsblkcnt_t f_blocks;
++     __fsblkcnt_t f_bfree;
++     __fsblkcnt_t f_bavail;
++     __fsfilcnt_t f_files;
++     __fsfilcnt_t f_ffree;
++     __fsid_t f_fsid;
++-    unsigned long long f_namelen;
++-    unsigned long long f_frsize;
++-    unsigned long long f_flags;
++-    unsigned long long f_spare[4];
+++    __SWORD_TYPE f_namelen;
+++    __SWORD_TYPE f_frsize;
+++    __SWORD_TYPE f_flags;
+++    __SWORD_TYPE f_spare[4];
++   };
++ 
++ #ifdef __USE_LARGEFILE64
++ struct statfs64
++   {
++-    unsigned long long f_type;
++-    unsigned long long f_bsize;
++-    __fsblkcnt_t f_blocks;
++-    __fsblkcnt_t f_bfree;
++-    __fsblkcnt_t f_bavail;
++-    __fsfilcnt_t f_files;
++-    __fsfilcnt_t f_ffree;
+++    __SWORD_TYPE f_type;
+++    __SWORD_TYPE f_bsize;
+++    __fsblkcnt64_t f_blocks;
+++    __fsblkcnt64_t f_bfree;
+++    __fsblkcnt64_t f_bavail;
+++    __fsfilcnt64_t f_files;
+++    __fsfilcnt64_t f_ffree;
++     __fsid_t f_fsid;
++-    unsigned long long f_namelen;
++-    unsigned long long f_frsize;
++-    unsigned long long f_flags;
++-    unsigned long long f_spare[4];
+++    __SWORD_TYPE f_namelen;
+++    __SWORD_TYPE f_frsize;
+++    __SWORD_TYPE f_flags;
+++    __SWORD_TYPE f_spare[4];
++   };
++ #endif
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
++index 8e900fd..ecc468e 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
++@@ -24,6 +24,6 @@
++ int
++ __fstatfs (int fd, struct statfs *buf)
++ {
++-  return INLINE_SYSCALL (fstatfs64, 2, fd, buf);
+++  return INLINE_SYSCALL (fstatfs64, 3, fd, sizeof (*buf), buf);
++ }
++ weak_alias (__fstatfs, fstatfs)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
++index d7b90bb..a624de6 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c
++@@ -35,7 +35,7 @@ __fstatfs64 (int fd, struct statfs64 *buf)
++   if (! __no_statfs64)
++ # endif
++     {
++-      int result = INLINE_SYSCALL (fstatfs64, 2, fd, buf);
+++      int result = INLINE_SYSCALL (fstatfs64, 3, fd, sizeof (*buf), buf);
++ 
++ # if __ASSUME_STATFS64 == 0
++       if (result == 0 || errno != ENOSYS)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
++index bf70a7a..9f1a817 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
++@@ -24,7 +24,7 @@
++ int
++ __statfs (const char *file, struct statfs *buf)
++ {
++-  return INLINE_SYSCALL (statfs64, 2, file, buf);
+++  return INLINE_SYSCALL (statfs64, 3, file, sizeof (*buf), buf);
++ }
++ libc_hidden_def (__statfs)
++ weak_alias (__statfs, statfs)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
++index b99ab94..3b3586e 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c
++@@ -24,6 +24,6 @@
++ int
++ __statfs64 (const char *file, struct statfs64 *buf)
++ {
++-  return INLINE_SYSCALL (statfs64, 2, file, buf);
+++  return INLINE_SYSCALL (statfs64, 3, file, sizeof (*buf), buf);
++ }
++ weak_alias (__statfs64,statfs64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sysdep.h b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++index 42f89c8..73f71d7 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sysdep.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
++@@ -108,7 +108,7 @@
++ .Lsyscall_error:						\
++ 	adrp	x1, :gottprel:errno;				\
++ 	neg	w2, w0;						\
++-	ldr	x1, [x1, :gottprel_lo12:errno];			\
+++	ldr	PTR_REG(1), [x1, :gottprel_lo12:errno];		\
++ 	mrs	x3, tpidr_el0;					\
++ 	mov	x0, -1;						\
++ 	str	w2, [x1, x3];					\
++@@ -161,11 +161,11 @@
++    call.  */
++ # undef INLINE_SYSCALL
++ # define INLINE_SYSCALL(name, nr, args...)				\
++-  ({ unsigned long long _sys_result = INTERNAL_SYSCALL (name, , nr, args);	\
+++  ({ unsigned long _sys_result = INTERNAL_SYSCALL (name, , nr, args);	\
++      if (__builtin_expect (INTERNAL_SYSCALL_ERROR_P (_sys_result, ), 0))\
++        {								\
++ 	 __set_errno (INTERNAL_SYSCALL_ERRNO (_sys_result, ));		\
++-	 _sys_result = (unsigned long long) -1;				\
+++	 _sys_result = (unsigned long) -1;				\
++        }								\
++      (long) _sys_result; })
++ 
++@@ -174,10 +174,10 @@
++ 
++ # undef INTERNAL_SYSCALL_RAW
++ # define INTERNAL_SYSCALL_RAW(name, err, nr, args...)		\
++-  ({ long long _sys_result;						\
+++  ({ long _sys_result;						\
++      {								\
++        LOAD_ARGS_##nr (args)					\
++-       register long long _x8 asm ("x8") = (name);		\
+++       register long _x8 asm ("x8") = (name);			\
++        asm volatile ("svc	0	// syscall " # name     \
++ 		     : "=r" (_x0) : "r"(_x8) ASM_ARGS_##nr : "memory");	\
++        _sys_result = _x0;					\
++@@ -199,48 +199,36 @@
++ # undef INTERNAL_SYSCALL_ERRNO
++ # define INTERNAL_SYSCALL_ERRNO(val, err)	(-(val))
++ 
++-/* Convert X to a long long, without losing any bits if it is one
++-   already or warning if it is a 32-bit pointer.  This zero extends
++-   32-bit pointers and sign extends other signed types.  Note this only
++-   works because ssize_t is long and short-short is promoted to int.   */
++-#define ARGIFY(X)											\
++-       ((unsigned long long) 										\
++-         __builtin_choose_expr(__builtin_types_compatible_p(__typeof__(X), __typeof__((X) - (X))),	\
++-                               (X),									\
++-           __builtin_choose_expr(__builtin_types_compatible_p(int, __typeof__((X) - (X))), 		\
++-                                 (X),									\
++-                                 (unsigned long)(X))))
++-
++ # define LOAD_ARGS_0()				\
++-  register long long _x0 asm ("x0");
+++  register long _x0 asm ("x0");
++ # define LOAD_ARGS_1(x0)			\
++-  long long _x0tmp = ARGIFY (x0);		\
+++  long _x0tmp = (long) (x0);		\
++   LOAD_ARGS_0 ()				\
++   _x0 = _x0tmp;
++ # define LOAD_ARGS_2(x0, x1)			\
++-  long long _x1tmp = ARGIFY (x1);		\
+++  long _x1tmp = (long) (x1);		\
++   LOAD_ARGS_1 (x0)				\
++-  register long long _x1 asm ("x1") = _x1tmp;
+++  register long _x1 asm ("x1") = _x1tmp;
++ # define LOAD_ARGS_3(x0, x1, x2)		\
++-  long long _x2tmp = ARGIFY (x2);		\
+++  long _x2tmp = (long) (x2);		\
++   LOAD_ARGS_2 (x0, x1)				\
++-  register long long _x2 asm ("x2") = _x2tmp;
+++  register long _x2 asm ("x2") = _x2tmp;
++ # define LOAD_ARGS_4(x0, x1, x2, x3)		\
++-  long long _x3tmp = ARGIFY (x3);		\
+++  long _x3tmp = (long) (x3);		\
++   LOAD_ARGS_3 (x0, x1, x2)			\
++-  register long long _x3 asm ("x3") = _x3tmp;
+++  register long _x3 asm ("x3") = _x3tmp;
++ # define LOAD_ARGS_5(x0, x1, x2, x3, x4)	\
++-  long long _x4tmp = ARGIFY (x4);		\
+++  long _x4tmp = (long) (x4);		\
++   LOAD_ARGS_4 (x0, x1, x2, x3)			\
++-  register long long _x4 asm ("x4") = _x4tmp;
+++  register long _x4 asm ("x4") = _x4tmp;
++ # define LOAD_ARGS_6(x0, x1, x2, x3, x4, x5)	\
++-  long long _x5tmp = ARGIFY (x5);		\
+++  long _x5tmp = (long) (x5);		\
++   LOAD_ARGS_5 (x0, x1, x2, x3, x4)		\
++-  register long long _x5 asm ("x5") = _x5tmp;
+++  register long _x5 asm ("x5") = _x5tmp;
++ # define LOAD_ARGS_7(x0, x1, x2, x3, x4, x5, x6)\
++-  long long _x6tmp = ARGIFY (x6);		\
+++  long _x6tmp = (long) (x6);		\
++   LOAD_ARGS_6 (x0, x1, x2, x3, x4, x5)		\
++-  register long long _x6 asm ("x6") = _x6tmp;
+++  register long _x6 asm ("x6") = _x6tmp;
++ 
++ # define ASM_ARGS_0
++ # define ASM_ARGS_1	, "r" (_x0)
++diff --git a/sysdeps/unix/sysv/linux/bits/fcntl-linux.h b/sysdeps/unix/sysv/linux/bits/fcntl-linux.h
++index 7e5b0ae..207a615 100644
++--- a/sysdeps/unix/sysv/linux/bits/fcntl-linux.h
+++++ b/sysdeps/unix/sysv/linux/bits/fcntl-linux.h
++@@ -101,7 +101,7 @@
++ #endif
++ 
++ #ifndef F_GETLK
++-# ifndef __USE_FILE_OFFSET64
+++#if !defined (__USE_FILE_OFFSET64) && !defined (__OFF_T_MATCHES_OFF64_T)
++ #  define F_GETLK	5	/* Get record locking info.  */
++ #  define F_SETLK	6	/* Set record locking info (non-blocking).  */
++ #  define F_SETLKW	7	/* Set record locking info (blocking).	*/
++diff --git a/sysdeps/unix/sysv/linux/generic/rename.c b/sysdeps/unix/sysv/linux/generic/rename.c
++index 174c147..39b6940 100644
++--- a/sysdeps/unix/sysv/linux/generic/rename.c
+++++ b/sysdeps/unix/sysv/linux/generic/rename.c
++@@ -25,5 +25,11 @@
++ int
++ rename (const char *old, const char *new)
++ {
+++#if defined (__NR_rename)
+++  return INLINE_SYSCALL (rename, 2, old, new);
+++#elif defined (__NR_renameat)
++   return INLINE_SYSCALL (renameat, 4, AT_FDCWD, old, AT_FDCWD, new);
+++#else
+++  return INLINE_SYSCALL (renameat2, 5, AT_FDCWD, old, AT_FDCWD, new, 0);
+++#endif
++ }
++diff --git a/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c b/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
++new file mode 100644
++index 0000000..2bd2bf1
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
++@@ -0,0 +1,43 @@
+++/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/resource.h>
+++#include <sys/types.h>
+++#include <sysdep.h>
+++#include <kernel-features.h>
+++
+++/* Put the soft and hard limits for RESOURCE in *RLIMITS.
+++   Returns 0 if successful, -1 if not (and sets errno).  */
+++int
+++__getrlimit (enum __rlimit_resource resource, struct rlimit *rlimits)
+++{
+++#ifdef __ASSUME_PRLIMIT64
+++  return INLINE_SYSCALL (prlimit64, 4, 0, resource, NULL, rlimits);
+++#else
+++# ifdef __NR_prlimit64
+++  int res = INLINE_SYSCALL (prlimit64, 4, 0, resource, NULL, rlimits);
+++  if (res == 0 || errno != ENOSYS)
+++    return res;
+++# endif
+++  return -2;
+++#endif
+++}
+++libc_hidden_def (__getrlimit)
+++#ifndef getrlimit
+++weak_alias (__getrlimit, getrlimit)
+++#endif
++diff --git a/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c b/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
++new file mode 100644
++index 0000000..fcceb03
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
++@@ -0,0 +1,48 @@
+++/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
+++   This file is part of the GNU C Library.
+++
+++   The GNU C Library is free software; you can redistribute it and/or
+++   modify it under the terms of the GNU Lesser General Public
+++   License as published by the Free Software Foundation; either
+++   version 2.1 of the License, or (at your option) any later version.
+++
+++   The GNU C Library is distributed in the hope that it will be useful,
+++   but WITHOUT ANY WARRANTY; without even the implied warranty of
+++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+++   Lesser General Public License for more details.
+++
+++   You should have received a copy of the GNU Lesser General Public
+++   License along with the GNU C Library; if not, see
+++   <http://www.gnu.org/licenses/>.  */
+++
+++#include <errno.h>
+++#include <sys/resource.h>
+++#include <sys/types.h>
+++#include <sysdep.h>
+++#include <kernel-features.h>
+++
+++/* Set the soft and hard limits for RESOURCE to *RLIMITS.
+++   Only the super-user can increase hard limits.
+++   Return 0 if successful, -1 if not (and sets errno).  */
+++int
+++__setrlimit (enum __rlimit_resource resource, const struct rlimit *rlimits)
+++{
+++# ifdef __NR_prlimit64
+++  struct rlimit64 rlim64;
+++  
+++  if (rlimits->rlim_cur == RLIM_INFINITY)
+++    rlim64.rlim_cur = RLIM64_INFINITY;
+++  else
+++    rlim64.rlim_cur = rlimits->rlim_cur;
+++  if (rlimits->rlim_max == RLIM_INFINITY)
+++    rlim64.rlim_max = RLIM64_INFINITY;
+++  else
+++    rlim64.rlim_max = rlimits->rlim_max;
+++
+++  int res = INLINE_SYSCALL (prlimit64, 4, 0, resource, &rlim64, NULL);
+++  if (res == 0 || errno != ENOSYS)
+++    return res;
+++# endif
+++  return -2;
+++}
+++weak_alias (__setrlimit, setrlimit)
++-- 
++2.5.0
++
+diff --git a/meta/recipes-core/glibc/ilp32_patches.inc b/meta/recipes-core/glibc/ilp32_patches.inc
+index 8f71401..7461ac6 100644
+--- a/meta/recipes-core/glibc/ilp32_patches.inc
++++ b/meta/recipes-core/glibc/ilp32_patches.inc
+@@ -25,3 +25,4 @@ SRC_URI += "file://ilp32_patches/0024-Add-support-for-AT_ARM64_MIDR.patch"
+ SRC_URI += "file://ilp32_patches/0025-Fix-ILP32-warning.patch"
+ SRC_URI += "file://ilp32_patches/0026-Change-type-of-__align-to-long-long.patch"
+ SRC_URI += "file://ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch"
++SRC_URI += "file://ilp32_patches/0028-ltplite-issues-fix-patch.patch"
+-- 
+2.5.0
+
