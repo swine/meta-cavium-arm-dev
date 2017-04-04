@@ -1,20 +1,20 @@
-From 8c5fd53b61fbf3d02fd801b37e958b8100f6e8d7 Mon Sep 17 00:00:00 2001
-From: Philipp Tomsich <philipp.tomsich@theobroma-systems.com>
-Date: Tue, 24 May 2016 03:04:51 +0300
-Subject: [PATCH 22/24] arm64:ilp32: add vdso-ilp32 and use for signal return
+From 7ad3c48d616d42c990f5a2e3c7c9ba7aa910a557 Mon Sep 17 00:00:00 2001
+From: Manish Jaggi <mjaggi@cavium.com>
+Date: Wed, 29 Mar 2017 17:58:12 -0700
+Subject: [PATCH 19/20] arm64:ilp32: add vdso-ilp32 and use for signal return
 
 ILP32 VDSO exports next symbols:
  __kernel_rt_sigreturn;
  __kernel_gettimeofday;
  __kernel_clock_gettime;
- __kernel_clock_getres;
+ __kernel_clock_getres.
 
 What shared object to use, kernel selects depending on result of
 is_ilp32_compat_task() in arch/arm64/kernel/vdso.c, so it substitutes
 correct pages and spec.
 
-Adjusted to move the move data page before code pages in sync with
-commit 601255ae3c98fdeeee3a8bb4696425e4f868b4f1
+Adjusted to move the data page before code pages in sync with
+commit 601255ae3c98 ("arm64: vdso: move data page before code pages")
 
 Signed-off-by: Philipp Tomsich <philipp.tomsich@theobroma-systems.com>
 Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems.com>
@@ -28,9 +28,10 @@ Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
  arch/arm64/kernel/vdso-ilp32/Makefile         | 74 +++++++++++++++++++++
  arch/arm64/kernel/vdso-ilp32/vdso-ilp32.S     | 33 ++++++++++
  arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S | 95 +++++++++++++++++++++++++++
- arch/arm64/kernel/vdso.c                      | 61 ++++++++++++++---
+ arch/arm64/kernel/vdso.c                      | 74 +++++++++++++++++----
  arch/arm64/kernel/vdso/gettimeofday.S         | 20 +++++-
- 10 files changed, 294 insertions(+), 13 deletions(-)
+ arch/arm64/kernel/vdso/vdso.S                 |  9 ++-
+ 11 files changed, 310 insertions(+), 19 deletions(-)
  create mode 100644 arch/arm64/kernel/vdso-ilp32/.gitignore
  create mode 100644 arch/arm64/kernel/vdso-ilp32/Makefile
  create mode 100644 arch/arm64/kernel/vdso-ilp32/vdso-ilp32.S
@@ -54,7 +55,7 @@ index 839ce00..649a9a4 100644
  ({									   \
  	(void *)(vdso_offset_##name - VDSO_LBASE + (unsigned long)(base)); \
 diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
-index 9c91b8c..3a25b57 100644
+index 566454c..167c1b6 100644
 --- a/arch/arm64/kernel/Makefile
 +++ b/arch/arm64/kernel/Makefile
 @@ -47,6 +47,7 @@ arm64-obj-$(CONFIG_ACPI)		+= acpi.o
@@ -76,10 +77,10 @@ index 9c91b8c..3a25b57 100644
 +$(obj)/vdso-ilp32/vdso-ilp32-offsets.h: $(obj)/vdso-ilp32
 +endif
 diff --git a/arch/arm64/kernel/asm-offsets.c b/arch/arm64/kernel/asm-offsets.c
-index 0d4f1e7..4e07a26 100644
+index e2414ab..e86cd1e 100644
 --- a/arch/arm64/kernel/asm-offsets.c
 +++ b/arch/arm64/kernel/asm-offsets.c
-@@ -100,6 +100,13 @@ int main(void)
+@@ -101,6 +101,13 @@ int main(void)
    DEFINE(TSPEC_TV_SEC,		offsetof(struct timespec, tv_sec));
    DEFINE(TSPEC_TV_NSEC,		offsetof(struct timespec, tv_nsec));
    BLANK();
@@ -94,10 +95,10 @@ index 0d4f1e7..4e07a26 100644
    DEFINE(TZ_DSTTIME,		offsetof(struct timezone, tz_dsttime));
    BLANK();
 diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index 4ddf00d..c458494 100644
+index f885e4a..8d51451 100644
 --- a/arch/arm64/kernel/signal.c
 +++ b/arch/arm64/kernel/signal.c
-@@ -264,6 +264,8 @@ void setup_return(struct pt_regs *regs, struct k_sigaction *ka,
+@@ -267,6 +267,8 @@ void setup_return(struct pt_regs *regs, struct k_sigaction *ka,
  
  	if (ka->sa.sa_flags & SA_RESTORER)
  		sigtramp = ka->sa.sa_restorer;
@@ -235,7 +236,7 @@ index 0000000..46ac072
 +	.previous
 diff --git a/arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S b/arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S
 new file mode 100644
-index 0000000..1dde31f
+index 0000000..fb89086
 --- /dev/null
 +++ b/arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S
 @@ -0,0 +1,95 @@
@@ -320,7 +321,7 @@ index 0000000..1dde31f
 + */
 +VERSION
 +{
-+	LINUX_4.6 {
++	LINUX_4.5 {
 +	global:
 +		__kernel_rt_sigreturn;
 +		__kernel_gettimeofday;
@@ -335,33 +336,55 @@ index 0000000..1dde31f
 + */
 +VDSO_sigtramp_ilp32		= __kernel_rt_sigreturn;
 diff --git a/arch/arm64/kernel/vdso.c b/arch/arm64/kernel/vdso.c
-index 26352a6..521a8e4 100644
+index 26352a6..d3363cd 100644
 --- a/arch/arm64/kernel/vdso.c
 +++ b/arch/arm64/kernel/vdso.c
-@@ -40,6 +40,12 @@ extern char vdso_start, vdso_end;
- static unsigned long vdso_pages;
- static struct page **vdso_pagelist;
+@@ -36,9 +36,13 @@
+ #include <asm/vdso.h>
+ #include <asm/vdso_datapage.h>
  
+-extern char vdso_start, vdso_end;
+-static unsigned long vdso_pages;
+-static struct page **vdso_pagelist;
++extern char vdso_lp64_start, vdso_lp64_end;
++static unsigned long vdso_lp64_pages;
++
 +#ifdef CONFIG_ARM64_ILP32
 +extern char vdso_ilp32_start, vdso_ilp32_end;
 +static unsigned long vdso_ilp32_pages;
-+static struct page **vdso_ilp32_pagelist;
 +#endif
-+
+ 
  /*
   * The vDSO data page.
-  */
-@@ -109,24 +115,29 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
+@@ -109,20 +113,44 @@ int aarch32_setup_vectors_page(struct linux_binprm *bprm, int uses_interp)
  }
  #endif /* CONFIG_AARCH32_EL0 */
  
 -static struct vm_special_mapping vdso_spec[2];
--
++static struct vm_special_mapping vdso_lp64_spec[2] = {
++	{
++		.name	= "[vvar]",
++	},
++	{
++		.name	= "[vdso]",
++	},
++};
+ 
 -static int __init vdso_init(void)
-+static int __init vdso_init_common(char *vdso_start, char *vdso_end,
++#ifdef CONFIG_ARM64_ILP32
++static struct vm_special_mapping vdso_ilp32_spec[2] = {
++	{
++		.name	= "[vvar]",
++	},
++	{
++		.name	= "[vdso]",
++	},
++};
++#endif
++
++static int __init vdso_init(char *vdso_start, char *vdso_end,
 +					  unsigned long *vdso_pagesp,
-+					  struct page ***vdso_pagelistp,
-+					  struct vm_special_mapping* vdso_spec)
++					  struct vm_special_mapping *vdso_spec)
  {
  	int i;
 +	unsigned long vdso_pages;
@@ -378,16 +401,12 @@ index 26352a6..521a8e4 100644
 +	*vdso_pagesp = vdso_pages;
  	pr_info("vdso: %ld pages (%ld code @ %p, %ld data @ %p)\n",
 -		vdso_pages + 1, vdso_pages, &vdso_start, 1L, vdso_data);
-+		vdso_pages + 1, vdso_pages, vdso_start, 1L, vdso_data);
++					vdso_pages + 1, vdso_pages,
++					vdso_start, 1L, vdso_data);
  
  	/* Allocate the vDSO pagelist, plus a page for the data. */
  	vdso_pagelist = kcalloc(vdso_pages + 1, sizeof(struct page *),
- 				GFP_KERNEL);
-+	*vdso_pagelistp = vdso_pagelist;
- 	if (vdso_pagelist == NULL)
- 		return -ENOMEM;
- 
-@@ -135,7 +146,7 @@ static int __init vdso_init(void)
+@@ -135,7 +163,7 @@ static int __init vdso_init(void)
  
  	/* Grab the vDSO code pages. */
  	for (i = 0; i < vdso_pages; i++)
@@ -396,46 +415,41 @@ index 26352a6..521a8e4 100644
  
  	/* Populate the special mapping structures */
  	vdso_spec[0] = (struct vm_special_mapping) {
-@@ -150,16 +161,46 @@ static int __init vdso_init(void)
+@@ -150,7 +178,22 @@ static int __init vdso_init(void)
  
  	return 0;
  }
+-arch_initcall(vdso_init);
 +
-+static struct vm_special_mapping vdso_spec[2];
-+
-+static int __init vdso_init(void)
++static int __init vdso_lp64_init(void)
 +{
-+	return vdso_init_common(&vdso_start, &vdso_end,
-+				&vdso_pages, &vdso_pagelist,
-+				vdso_spec);
++	return vdso_init(&vdso_lp64_start, &vdso_lp64_end,
++				&vdso_lp64_pages, vdso_lp64_spec);
 +}
- arch_initcall(vdso_init);
- 
-+#ifdef CONFIG_ARM64_ILP32
-+static struct vm_special_mapping vdso_ilp32_spec[2];
++arch_initcall(vdso_lp64_init);
 +
++#ifdef CONFIG_ARM64_ILP32
 +static int __init vdso_ilp32_init(void)
 +{
-+	return vdso_init_common(&vdso_ilp32_start, &vdso_ilp32_end,
-+				&vdso_ilp32_pages, &vdso_ilp32_pagelist,
-+				vdso_ilp32_spec);
++	return vdso_init(&vdso_ilp32_start, &vdso_ilp32_end,
++				&vdso_ilp32_pages, vdso_ilp32_spec);
 +}
 +arch_initcall(vdso_ilp32_init);
 +#endif
-+
+ 
  int arch_setup_additional_pages(struct linux_binprm *bprm,
  				int uses_interp)
- {
+@@ -158,8 +201,17 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
  	struct mm_struct *mm = current->mm;
  	unsigned long vdso_base, vdso_text_len, vdso_mapping_len;
  	void *ret;
-+	unsigned long pages = vdso_pages;
-+	struct vm_special_mapping *spec = vdso_spec;
++	unsigned long pages = vdso_lp64_pages;
++	struct vm_special_mapping *vdso_spec = vdso_lp64_spec;
 +
 +#ifdef CONFIG_ARM64_ILP32
 +	if (is_ilp32_compat_task()) {
-+	        pages = vdso_ilp32_pages;
-+	        spec = vdso_ilp32_spec;
++		pages = vdso_ilp32_pages;
++		vdso_spec = vdso_ilp32_spec;
 +	}
 +#endif
  
@@ -443,24 +457,6 @@ index 26352a6..521a8e4 100644
 +	vdso_text_len = pages << PAGE_SHIFT;
  	/* Be sure to map the data page */
  	vdso_mapping_len = vdso_text_len + PAGE_SIZE;
- 
-@@ -171,7 +212,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
- 	}
- 	ret = _install_special_mapping(mm, vdso_base, PAGE_SIZE,
- 				       VM_READ|VM_MAYREAD,
--				       &vdso_spec[0]);
-+				       &spec[0]);
- 	if (IS_ERR(ret))
- 		goto up_fail;
- 
-@@ -180,7 +221,7 @@ int arch_setup_additional_pages(struct linux_binprm *bprm,
- 	ret = _install_special_mapping(mm, vdso_base, vdso_text_len,
- 				       VM_READ|VM_EXEC|
- 				       VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC,
--				       &vdso_spec[1]);
-+				       &spec[1]);
- 	if (IS_ERR(ret))
- 		goto up_fail;
  
 diff --git a/arch/arm64/kernel/vdso/gettimeofday.S b/arch/arm64/kernel/vdso/gettimeofday.S
 index efa79e8..a2d8a70 100644
@@ -535,6 +531,28 @@ index efa79e8..a2d8a70 100644
  
  3:	/* res == NULL. */
  	mov	w0, wzr
+diff --git a/arch/arm64/kernel/vdso/vdso.S b/arch/arm64/kernel/vdso/vdso.S
+index 60c1db5..a40ae24 100644
+--- a/arch/arm64/kernel/vdso/vdso.S
++++ b/arch/arm64/kernel/vdso/vdso.S
+@@ -21,13 +21,12 @@
+ #include <linux/const.h>
+ #include <asm/page.h>
+ 
+-	__PAGE_ALIGNED_DATA
+-
+-	.globl vdso_start, vdso_end
++	.globl vdso_lp64_start, vdso_lp64_end
++	.section .rodata
+ 	.balign PAGE_SIZE
+-vdso_start:
++vdso_lp64_start:
+ 	.incbin "arch/arm64/kernel/vdso/vdso.so"
+ 	.balign PAGE_SIZE
+-vdso_end:
++vdso_lp64_end:
+ 
+ 	.previous
 -- 
-1.9.1
+2.5.0
 

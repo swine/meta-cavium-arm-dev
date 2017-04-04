@@ -1,7 +1,7 @@
-From 555e216fb0e7d3caf30304560c58141287dfaa05 Mon Sep 17 00:00:00 2001
+From 0810c83bc35997412613ca2c124382ed96f53cdb Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Tue, 24 May 2016 03:04:36 +0300
-Subject: [PATCH 07/24] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
+Date: Tue, 29 Dec 2015 12:26:35 +0300
+Subject: [PATCH 02/20] 32-bit ABI: introduce ARCH_32BIT_OFF_T config option
 
 All new 32-bit architectures should have 64-bit off_t type, but existing
 architectures has 32-bit ones.
@@ -50,7 +50,7 @@ Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
  27 files changed, 30 insertions(+), 1 deletion(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index ab7692e..641c1cb 100644
+index 4e949e5..b356bb6 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -233,6 +233,10 @@ config ARCH_THREAD_INFO_ALLOCATOR
@@ -217,16 +217,17 @@ index 78ae555..edf7372 100644
  	select HAVE_UID16
  	select GENERIC_IRQ_SHOW
 diff --git a/arch/nios2/Kconfig b/arch/nios2/Kconfig
-index 4375554..a38fc38 100644
+index 4375554..e62c41f 100644
 --- a/arch/nios2/Kconfig
 +++ b/arch/nios2/Kconfig
-@@ -1,5 +1,6 @@
+@@ -1,6 +1,7 @@
  config NIOS2
  	def_bool y
-+	select ARCH_32BIT_OFF_T
  	select ARCH_WANT_OPTIONAL_GPIOLIB
++	select ARCH_32BIT_OFF_T
  	select CLKSRC_OF
  	select GENERIC_ATOMIC64
+ 	select GENERIC_CLOCKEVENTS
 diff --git a/arch/openrisc/Kconfig b/arch/openrisc/Kconfig
 index 443f44d..7bef847 100644
 --- a/arch/openrisc/Kconfig
@@ -311,19 +312,18 @@ index 8ec7a45..522cf45 100644
  	select USE_PMC if PERF_EVENTS
  	select HAVE_DMA_ATTRS
 diff --git a/arch/unicore32/Kconfig b/arch/unicore32/Kconfig
-index c9faddc..b813ff8 100644
+index c9faddc..1a8c3c0 100644
 --- a/arch/unicore32/Kconfig
 +++ b/arch/unicore32/Kconfig
-@@ -1,6 +1,7 @@
+@@ -1,5 +1,6 @@
  config UNICORE32
  	def_bool y
- 	select ARCH_MIGHT_HAVE_PC_PARPORT
 +	select ARCH_32BIT_OFF_T
+ 	select ARCH_MIGHT_HAVE_PC_PARPORT
  	select ARCH_MIGHT_HAVE_PC_SERIO
  	select HAVE_MEMBLOCK
- 	select HAVE_GENERIC_DMA_COHERENT
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 03ef954..47c841d 100644
+index fd4932c..003ad62 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
 @@ -20,6 +20,7 @@ config X86
@@ -372,5 +372,5 @@ index 76ce329..46960a1 100644
  
  #if BITS_PER_LONG == 32
 -- 
-1.9.1
+2.5.0
 

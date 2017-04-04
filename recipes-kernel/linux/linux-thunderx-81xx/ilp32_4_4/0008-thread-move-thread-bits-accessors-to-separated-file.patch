@@ -1,7 +1,7 @@
-From 424bca6aab79eea983122b934b2c4165cc09a3d0 Mon Sep 17 00:00:00 2001
+From 728639626bdd57af565f043776730b4362b68f38 Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:41 +0300
-Subject: [PATCH 12/24] thread: move thread bits accessors to separated file
+Subject: [PATCH 08/20] thread: move thread bits accessors to separated file
 
 They may be accessed from low-level code, so isolating is a measure to
 avoid circular dependencies in header files.
@@ -12,17 +12,17 @@ SIGPENDING (and never should be)"
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
- include/linux/thread_bits.h | 55 +++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/thread_bits.h | 54 +++++++++++++++++++++++++++++++++++++++++++++
  include/linux/thread_info.h | 44 +-----------------------------------
- 2 files changed, 56 insertions(+), 43 deletions(-)
+ 2 files changed, 55 insertions(+), 43 deletions(-)
  create mode 100644 include/linux/thread_bits.h
 
 diff --git a/include/linux/thread_bits.h b/include/linux/thread_bits.h
 new file mode 100644
-index 0000000..0d05d16
+index 0000000..ed788b0
 --- /dev/null
 +++ b/include/linux/thread_bits.h
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,54 @@
 +
 +/* thread_bits.h: common low-level thread bits accessors */
 +
@@ -77,7 +77,6 @@ index 0000000..0d05d16
 +
 +#endif /* !__ASSEMBLY__ */
 +#endif /* _LINUX_THREAD_BITS_H */
-+
 diff --git a/include/linux/thread_info.h b/include/linux/thread_info.h
 index ff307b5..c905fec 100644
 --- a/include/linux/thread_info.h
@@ -141,5 +140,5 @@ index ff307b5..c905fec 100644
  
  #if defined TIF_RESTORE_SIGMASK && !defined HAVE_SET_RESTORE_SIGMASK
 -- 
-1.9.1
+2.5.0
 

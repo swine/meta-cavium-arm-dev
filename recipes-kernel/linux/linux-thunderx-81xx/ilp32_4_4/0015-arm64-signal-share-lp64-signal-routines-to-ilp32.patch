@@ -1,15 +1,15 @@
-From 4dae2734132f2e47479753ffaf6222076c2bfa47 Mon Sep 17 00:00:00 2001
+From 7d94f604c2d5c3bd93d9ad8c1f7989c01bd1086e Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:48 +0300
-Subject: [PATCH 19/24] arm64: signal: share lp64 signal routines to ilp32
+Subject: [PATCH 15/20] arm64: signal: share lp64 signal routines to ilp32
 
 After that, it will be possible to reuse it in ilp32.
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
  arch/arm64/include/asm/signal_common.h | 33 ++++++++++++
- arch/arm64/kernel/signal.c             | 91 +++++++++++++++++++++-------------
- 2 files changed, 90 insertions(+), 34 deletions(-)
+ arch/arm64/kernel/signal.c             | 93 +++++++++++++++++++++-------------
+ 2 files changed, 92 insertions(+), 34 deletions(-)
  create mode 100644 arch/arm64/include/asm/signal_common.h
 
 diff --git a/arch/arm64/include/asm/signal_common.h b/arch/arm64/include/asm/signal_common.h
@@ -52,14 +52,17 @@ index 0000000..756ed2c
 +
 +#endif /* __ASM_SIGNAL_COMMON_H */
 diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index 65baaef..b22e02a 100644
+index 65baaef..5244075 100644
 --- a/arch/arm64/kernel/signal.c
 +++ b/arch/arm64/kernel/signal.c
-@@ -34,18 +34,23 @@
+@@ -34,18 +34,26 @@
  #include <asm/fpsimd.h>
  #include <asm/signal32.h>
  #include <asm/vdso.h>
 +#include <asm/signal_common.h>
++
++#define RT_SIGFRAME_FP_POS (offsetof(struct rt_sigframe, sig)	\
++			+ offsetof(struct sigframe, fp))
 +
 +struct sigframe {
 +	struct ucontext uc;
@@ -83,7 +86,7 @@ index 65baaef..b22e02a 100644
  {
  	struct fpsimd_state *fpsimd = &current->thread.fpsimd_state;
  	int err;
-@@ -65,7 +70,7 @@ static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
+@@ -65,7 +73,7 @@ static int preserve_fpsimd_context(struct fpsimd_context __user *ctx)
  	return err ? -EFAULT : 0;
  }
  
@@ -92,7 +95,7 @@ index 65baaef..b22e02a 100644
  {
  	struct fpsimd_state fpsimd;
  	__u32 magic, size;
-@@ -93,22 +98,30 @@ static int restore_fpsimd_context(struct fpsimd_context __user *ctx)
+@@ -93,22 +101,30 @@ static int restore_fpsimd_context(struct fpsimd_context __user *ctx)
  }
  
  static int restore_sigframe(struct pt_regs *regs,
@@ -131,7 +134,7 @@ index 65baaef..b22e02a 100644
  
  	/*
  	 * Avoid sys_rt_sigreturn() restarting.
-@@ -145,10 +158,10 @@ asmlinkage long sys_rt_sigreturn(struct pt_regs *regs)
+@@ -145,10 +161,10 @@ asmlinkage long sys_rt_sigreturn(struct pt_regs *regs)
  	if (!access_ok(VERIFY_READ, frame, sizeof (*frame)))
  		goto badframe;
  
@@ -144,7 +147,7 @@ index 65baaef..b22e02a 100644
  		goto badframe;
  
  	return regs->regs[0];
-@@ -162,27 +175,36 @@ badframe:
+@@ -162,27 +178,36 @@ badframe:
  	return 0;
  }
  
@@ -191,25 +194,25 @@ index 65baaef..b22e02a 100644
  
  	if (err == 0) {
  		struct fpsimd_context *fpsimd_ctx =
-@@ -229,14 +251,14 @@ static struct rt_sigframe __user *get_sigframe(struct ksignal *ksig,
+@@ -229,14 +254,14 @@ static struct rt_sigframe __user *get_sigframe(struct ksignal *ksig,
  	return frame;
  }
  
 -static void setup_return(struct pt_regs *regs, struct k_sigaction *ka,
 -			 void __user *frame, int usig)
 +void setup_return(struct pt_regs *regs, struct k_sigaction *ka,
-+			 void __user *frame, off_t sigframe_off, int usig)
++			 void __user *frame, off_t fp_pos, int usig)
  {
  	__sigrestore_t sigtramp;
  
  	regs->regs[0] = usig;
  	regs->sp = (unsigned long)frame;
 -	regs->regs[29] = regs->sp + offsetof(struct rt_sigframe, fp);
-+	regs->regs[29] = regs->sp + sigframe_off + offsetof(struct sigframe, fp);
++	regs->regs[29] = regs->sp + fp_pos;
  	regs->pc = (unsigned long)ka->sa.sa_handler;
  
  	if (ka->sa.sa_flags & SA_RESTORER)
-@@ -257,17 +279,18 @@ static int setup_rt_frame(int usig, struct ksignal *ksig, sigset_t *set,
+@@ -257,17 +282,17 @@ static int setup_rt_frame(int usig, struct ksignal *ksig, sigset_t *set,
  	if (!frame)
  		return 1;
  
@@ -224,8 +227,7 @@ index 65baaef..b22e02a 100644
 +	err |= setup_sigframe(&frame->sig, regs, set);
  	if (err == 0) {
 -		setup_return(regs, &ksig->ka, frame, usig);
-+		setup_return(regs, &ksig->ka, frame,
-+			offsetof(struct rt_sigframe, sig), usig);
++		setup_return(regs, &ksig->ka, frame, RT_SIGFRAME_FP_POS, usig);
  		if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
  			err |= copy_siginfo_to_user(&frame->info, &ksig->info);
  			regs->regs[1] = (unsigned long)&frame->info;
@@ -235,5 +237,5 @@ index 65baaef..b22e02a 100644
  	}
  
 -- 
-1.9.1
+2.5.0
 

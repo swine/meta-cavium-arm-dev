@@ -1,7 +1,7 @@
-From c2bc401ce50cac456b9f0994dc7bc0e467df2622 Mon Sep 17 00:00:00 2001
+From aab9b1d615dd3b13f18ba43fa4dc553747119c3e Mon Sep 17 00:00:00 2001
 From: Yury Norov <ynorov@caviumnetworks.com>
 Date: Tue, 24 May 2016 03:04:43 +0300
-Subject: [PATCH 14/24] arm64: ilp32: add is_ilp32_compat_{task,thread} and
+Subject: [PATCH 10/20] arm64: ilp32: add is_ilp32_compat_{task,thread} and
  TIF_32BIT_AARCH64
 
 ILP32 tasks are needed to be distinguished from lp64 and aarch32.
@@ -18,9 +18,9 @@ Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 Reviewed-by: David Daney <ddaney@caviumnetworks.com>
 ---
  arch/arm64/include/asm/elf.h         | 13 +++++++++++--
- arch/arm64/include/asm/is_compat.h   | 28 +++++++++++++++++++++++++++-
+ arch/arm64/include/asm/is_compat.h   | 30 ++++++++++++++++++++++++++++--
  arch/arm64/include/asm/thread_info.h |  2 ++
- 3 files changed, 40 insertions(+), 3 deletions(-)
+ 3 files changed, 41 insertions(+), 4 deletions(-)
 
 diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
 index d7e01fe..61b844c 100644
@@ -54,10 +54,10 @@ index d7e01fe..61b844c 100644
  extern int aarch32_setup_vectors_page(struct linux_binprm *bprm,
  				      int uses_interp);
 diff --git a/arch/arm64/include/asm/is_compat.h b/arch/arm64/include/asm/is_compat.h
-index 6139b5a..55134cf 100644
+index 8dba5ca..7726beb 100644
 --- a/arch/arm64/include/asm/is_compat.h
 +++ b/arch/arm64/include/asm/is_compat.h
-@@ -45,11 +45,37 @@ static inline int is_a32_compat_thread(struct thread_info *thread)
+@@ -45,18 +45,44 @@ static inline int is_a32_compat_thread(struct thread_info *thread)
  
  #endif /* CONFIG_AARCH32_EL0 */
  
@@ -96,6 +96,14 @@ index 6139b5a..55134cf 100644
  }
  
  #endif /* CONFIG_COMPAT */
+ 
+ static inline int is_compat_thread(struct thread_info *thread)
+ {
+-	return is_a32_compat_thread(thread);
++	return is_a32_compat_thread(thread) || is_ilp32_compat_thread(thread);
+ }
+ 
+ 
 diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
 index dd046c5..22a07d1 100644
 --- a/arch/arm64/include/asm/thread_info.h
@@ -117,5 +125,5 @@ index dd046c5..22a07d1 100644
  #define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
  				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE)
 -- 
-1.9.1
+2.5.0
 
