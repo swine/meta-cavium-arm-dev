@@ -31,7 +31,7 @@ do_compile () {
 }
 
 do_deploy () {
-	cp ${BDK_IMAGE} ${TMP_BDK_IMAGE}
+	cp -rf ${BDK_IMAGE} ${TMP_BDK_IMAGE}
 	${FATFS_TOOL} -i ${TMP_BDK_IMAGE} cp ${DTB_DIR}/*.dtb /
 	cp  ${FIP_BL2_BL31_IMAGE}  ${FIP_IMAGE}
 	${FIP_CREATE} --dump  --bl33 ${UBOOT_IMAGE} ${FIP_IMAGE}
