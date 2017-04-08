@@ -1,47 +1,76 @@
-From daf897cfaa67d4bc3ed69059a18f126db1b52ebd Mon Sep 17 00:00:00 2001
-From: Manish Jaggi <mjaggi@cavium.com>
-Date: Tue, 4 Apr 2017 02:56:27 -0700
-Subject: [PATCH 2/2] glibc: ilp32 syscall fix patches
+From 85b6eb1c56d47b9ddca09bb87c0b61eeafda09df Mon Sep 17 00:00:00 2001
+From: Manish jaggi <mjaggi@cavium.com>
+Date: Sat, 8 Apr 2017 12:20:05 -0700
+Subject: [PATCH] Updated glibc ilp32 patches
 
-This patch fixes found while running ltplite
-
-Signed-off-by: Manish Jaggi <mjaggi@cavium.com>
 ---
- .../0028-ltplite-issues-fix-patch.patch            | 462 +++++++++++++++++++++
- meta/recipes-core/glibc/ilp32_patches.inc          |   1 +
- 2 files changed, 463 insertions(+)
+ .../0028-ltplite-issues-fix-patch.patch            | 1036 ++++++++++++++++++++
+ meta/recipes-core/glibc/ilp32_patches.inc          |    1 +
+ 2 files changed, 1037 insertions(+)
  create mode 100644 meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
 
 diff --git a/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch b/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
 new file mode 100644
-index 0000000..7f7584c
+index 0000000..9f7c02a
 --- /dev/null
 +++ b/meta/recipes-core/glibc/glibc/ilp32_patches/0028-ltplite-issues-fix-patch.patch
-@@ -0,0 +1,462 @@
-+From faa376eaef9308b3ad01a9991b5c67cfc9988e0e Mon Sep 17 00:00:00 2001
-+From: Manish Jaggi <mjaggi@cavium.com>
-+Date: Sat, 1 Apr 2017 19:06:29 -0700
-+Subject: [PATCH] ltplite issues fix patch
+@@ -0,0 +1,1036 @@
++From 6caa1f3a195f2dee4d41d5880cdcca0ccd3bd608 Mon Sep 17 00:00:00 2001
++From: Manish jaggi <mjaggi@cavium.com>
++Date: Fri, 7 Apr 2017 22:17:17 -0700
++Subject: [PATCH] apr8 patch
 +
 +---
-+ sysdeps/aarch64/dl-tlsdesc.S                       |  8 ++--
++ sysdeps/aarch64/bits/wordsize.h                    |  2 +-
++ sysdeps/aarch64/dl-tlsdesc.S                       |  8 +-
++ sysdeps/aarch64/nptl/bits/pthreadtypes.h           | 15 ++++
++ sysdeps/aarch64/nptl/bits/semaphore.h              |  6 +-
 + sysdeps/aarch64/sysdep.h                           |  2 +-
-+ sysdeps/aarch64/tls-macros.h                       | 12 ++++++
++ sysdeps/aarch64/tls-macros.h                       | 12 +++
++ sysdeps/posix/alarm.c                              |  4 +
 + sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h       |  2 +
-+ sysdeps/unix/sysv/linux/aarch64/bits/statfs.h      | 34 +++++++--------
++ sysdeps/unix/sysv/linux/aarch64/bits/stat.h        | 91 +++++++++++-----------
++ sysdeps/unix/sysv/linux/aarch64/bits/statfs.h      | 34 ++++----
++ sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h   |  4 +-
 + sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c    |  2 +-
 + sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs64.c  |  2 +-
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c     | 11 ++-
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c   |  9 +--
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c   | 10 +--
++ sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c | 19 ++---
++ sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c     | 10 +--
++ sysdeps/unix/sysv/linux/aarch64/ilp32/renameat.c   | 14 ++++
 + sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c     |  2 +-
 + sysdeps/unix/sysv/linux/aarch64/ilp32/statfs64.c   |  2 +-
-+ sysdeps/unix/sysv/linux/aarch64/sysdep.h           | 50 ++++++++--------------
++ sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c      | 10 +--
++ sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c    | 11 ++-
++ sysdeps/unix/sysv/linux/aarch64/ipc_priv.h         |  8 ++
++ sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h |  6 +-
++ sysdeps/unix/sysv/linux/aarch64/sigaction.c        |  4 +-
++ sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h   |  3 +-
++ sysdeps/unix/sysv/linux/aarch64/sysdep.h           | 50 +++++-------
 + sysdeps/unix/sysv/linux/bits/fcntl-linux.h         |  2 +-
-+ sysdeps/unix/sysv/linux/generic/rename.c           |  6 +++
-+ .../sysv/linux/generic/wordsize-32/getrlimit.c     | 43 +++++++++++++++++++
-+ .../sysv/linux/generic/wordsize-32/setrlimit.c     | 48 +++++++++++++++++++++
-+ 14 files changed, 157 insertions(+), 58 deletions(-)
++ sysdeps/unix/sysv/linux/generic/kernel_stat.h      |  4 +-
++ sysdeps/unix/sysv/linux/generic/rename.c           |  6 ++
++ .../sysv/linux/generic/wordsize-32/getrlimit.c     | 55 +++++++++++++
++ .../sysv/linux/generic/wordsize-32/setrlimit.c     | 48 ++++++++++++
++ sysdeps/unix/sysv/linux/setrlimit64.c              | 20 -----
++ 34 files changed, 308 insertions(+), 180 deletions(-)
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ilp32/renameat.c
++ create mode 100644 sysdeps/unix/sysv/linux/aarch64/ipc_priv.h
 + create mode 100644 sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
 + create mode 100644 sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
 +
++diff --git a/sysdeps/aarch64/bits/wordsize.h b/sysdeps/aarch64/bits/wordsize.h
++index 18697e2..0017e0c 100644
++--- a/sysdeps/aarch64/bits/wordsize.h
+++++ b/sysdeps/aarch64/bits/wordsize.h
++@@ -25,4 +25,4 @@
++ 
++ /* This allows ILP32 and AARCH64 applications
++    both access utmp. */
++-#define __WORDSIZE_TIME64_COMPAT32	1
+++#define __WORDSIZE_TIME64_COMPAT32	0
 +diff --git a/sysdeps/aarch64/dl-tlsdesc.S b/sysdeps/aarch64/dl-tlsdesc.S
 +index 718dddf..86ea3fb 100644
 +--- a/sysdeps/aarch64/dl-tlsdesc.S
@@ -76,6 +105,56 @@ index 0000000..7f7584c
 + 	ldr	PTR_REG (1), [x0,#PTR_SIZE]
 + 	ldr	PTR_REG (0), [x4]
 + 	ldr	PTR_REG (3), [x1,#(PTR_SIZE * 2)]
++diff --git a/sysdeps/aarch64/nptl/bits/pthreadtypes.h b/sysdeps/aarch64/nptl/bits/pthreadtypes.h
++index 13984a7..9b216cc 100644
++--- a/sysdeps/aarch64/nptl/bits/pthreadtypes.h
+++++ b/sysdeps/aarch64/nptl/bits/pthreadtypes.h
++@@ -21,6 +21,18 @@
++ 
++ #include <endian.h>
++ 
+++#ifdef __ILP32__
+++# define __SIZEOF_PTHREAD_ATTR_T        32
+++# define __SIZEOF_PTHREAD_MUTEX_T       32
+++# define __SIZEOF_PTHREAD_MUTEXATTR_T    4
+++# define __SIZEOF_PTHREAD_COND_T        48
+++# define __SIZEOF_PTHREAD_COND_COMPAT_T 48
+++# define __SIZEOF_PTHREAD_CONDATTR_T     4
+++# define __SIZEOF_PTHREAD_RWLOCK_T      48
+++# define __SIZEOF_PTHREAD_RWLOCKATTR_T   8
+++# define __SIZEOF_PTHREAD_BARRIER_T     20
+++# define __SIZEOF_PTHREAD_BARRIERATTR_T  4
+++#else
++ #define __SIZEOF_PTHREAD_ATTR_T        64
++ #define __SIZEOF_PTHREAD_MUTEX_T       48
++ #define __SIZEOF_PTHREAD_MUTEXATTR_T    8
++@@ -31,6 +43,9 @@
++ #define __SIZEOF_PTHREAD_RWLOCKATTR_T   8
++ #define __SIZEOF_PTHREAD_BARRIER_T     32
++ #define __SIZEOF_PTHREAD_BARRIERATTR_T  8
+++#endif
+++
+++#define __PTHREAD_RWLOCK_INT_FLAGS_SHARED 1
++ 
++ 
++ /* Thread identifiers.  The structure of the attribute type is not
++diff --git a/sysdeps/aarch64/nptl/bits/semaphore.h b/sysdeps/aarch64/nptl/bits/semaphore.h
++index 3fe6047..aa85843 100644
++--- a/sysdeps/aarch64/nptl/bits/semaphore.h
+++++ b/sysdeps/aarch64/nptl/bits/semaphore.h
++@@ -21,7 +21,11 @@
++ #endif
++ 
++ 
++-#define __SIZEOF_SEM_T	32
+++#ifdef __ILP32__
+++# define __SIZEOF_SEM_T 16
+++#else
+++# define __SIZEOF_SEM_T 32
+++#endif
++ 
++ 
++ /* Value returned if `sem_open' failed.  */
 +diff --git a/sysdeps/aarch64/sysdep.h b/sysdeps/aarch64/sysdep.h
 +index c4ff5e7..321c939 100644
 +--- a/sysdeps/aarch64/sysdep.h
@@ -119,6 +198,21 @@ index 0000000..7f7584c
 + 
 + #define TLS_LE(x)					\
 +   ({ register unsigned long __result asm ("x0");	\
++diff --git a/sysdeps/posix/alarm.c b/sysdeps/posix/alarm.c
++index 47b7477..b9f3cb0 100644
++--- a/sysdeps/posix/alarm.c
+++++ b/sysdeps/posix/alarm.c
++@@ -35,6 +35,10 @@ alarm (unsigned int seconds)
++   new.it_interval.tv_sec = 0;
++   new.it_value.tv_usec = 0;
++   new.it_value.tv_sec = (long int) seconds;
+++  old.it_interval.tv_usec = 0;
+++  old.it_interval.tv_sec = 0;
+++  old.it_value.tv_usec = 0;
+++  old.it_value.tv_sec = 0;
++   if (__setitimer (ITIMER_REAL, &new, &old) < 0)
++     return 0;
++ 
 +diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h b/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
 +index 7dcbe65..1717c35 100644
 +--- a/sysdeps/unix/sysv/linux/aarch64/bits/fcntl.h
@@ -135,6 +229,161 @@ index 0000000..7f7584c
 + 
 + struct flock
 +   {
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/stat.h b/sysdeps/unix/sysv/linux/aarch64/bits/stat.h
++index eec6789..a0e516b 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/stat.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/stat.h
++@@ -34,8 +34,8 @@
++ #include <endian.h>
++ struct __kernel_timespec
++   {
++-    unsigned long long tv_sec;		/* Seconds.  */
++-    long long tv_nsec;			/* Nanoseconds.  */
+++    long tv_sec;			/* Seconds.  */
+++    long tv_nsec;			/* Nanoseconds.  */
++   };
++ #define conv_timespec(u, k) do {	\
++ 	(u)->tv_sec = (k)->tv_sec;	\
++@@ -58,7 +58,12 @@ struct __kernel_timespec
++ struct stat
++   {
++     __dev_t st_dev;			/* Device.  */
+++#ifdef __LP64__
++     __ino_t st_ino;			/* File serial number.	*/
+++#else
+++    unsigned int __pad0;
+++    unsigned int __st_ino;
+++#endif
++     __mode_t st_mode;			/* File mode.  */
++     __nlink_t st_nlink;			/* Link count.  */
++     __uid_t st_uid;			/* User ID of the file's owner.	*/
++@@ -67,8 +72,9 @@ struct stat
++     __dev_t __pad1;
++     __off_t st_size;			/* Size of file, in bytes.  */
++     __blksize_t st_blksize;		/* Optimal block size for I/O.  */
+++#ifdef __LP64__
++     int __pad2;
++-
+++#endif
++     __blkcnt_t st_blocks;		/* Number 512-byte blocks allocated. */
++ #ifdef __USE_XOPEN2K8
++     /* Nanosecond resolution timestamps are stored in a format
++@@ -77,48 +83,49 @@ struct stat
++        identifier 'timespec' to appear in the <sys/stat.h> header.
++        Therefore we have to handle the use of this header in strictly
++        standard-compliant sources special.  */
++-    union {
++-	    struct timespec st_atim;		/* Time of last access.  */
++-	    struct __kernel_timespec __st_atim;
++-    };
++-    union {
++-	    struct timespec st_mtim;		/* Time of last modification.  */
++-	    struct __kernel_timespec __st_mtim;
++-    };
++-    union {
++-	    struct timespec st_ctim;		/* Time of last status change.  */
++-	    struct __kernel_timespec __st_ctim;
++-    };
+++    struct timespec st_atim;		/* Time of last access.  */
+++    struct timespec st_mtim;		/* Time of last modification.  */
+++    struct timespec st_ctim;		/* Time of last status change.  */
++ # define st_atime st_atim.tv_sec	/* Backward compatibility.  */
++ # define st_mtime st_mtim.tv_sec
++ # define st_ctime st_ctim.tv_sec
++ #else
++-    __type3264(__time_t, st_atime);			/* Time of last access.  */
++-    __type3264(unsigned long int, st_atimensec);	/* Nsecs of last access.  */
++-    __type3264(__time_t, st_mtime);			/* Time of last modification.  */
++-    __type3264(unsigned long int, st_mtimensec);	/* Nsecs of last modification.  */
++-    __type3264(__time_t, st_ctime);			/* Time of last status change.  */
++-    __type3264(unsigned long int, st_ctimensec);	/* Nsecs of last status change.  */
+++    __time_t st_atime;                  /* Time of last access.  */
+++    unsigned long int st_atimensec;     /* Nscecs of last access.  */
+++    __time_t st_mtime;                  /* Time of last modification.  */
+++    unsigned long int st_mtimensec;     /* Nsecs of last modification.  */
+++    __time_t st_ctime;                  /* Time of last status change.  */
+++    unsigned long int st_ctimensec;     /* Nsecs of last status change.  */
++ #endif
+++#ifdef __LP64__
++     int __glibc_reserved[2];
+++#else
+++    __ino_t st_ino;
+++#endif
++   };
++ 
++ #ifdef __USE_LARGEFILE64
++ struct stat64
++   {
++     __dev_t st_dev;			/* Device.  */
++-    __ino_t st_ino;			/* File serial number.	*/
+++#ifdef __LP64__
+++    __ino_t st_ino;			/* File serial number. */
+++#else
+++    unsigned int __pad0;
+++    unsigned int __st_ino;
+++#endif
++     __mode_t st_mode;			/* File mode.  */
++     __nlink_t st_nlink;			/* Link count.  */
++     __uid_t st_uid;			/* User ID of the file's owner.	*/
++     __gid_t st_gid;			/* Group ID of the file's group.*/
++     __dev_t st_rdev;			/* Device number, if device.  */
++     __dev_t __pad1;
++-    __off_t st_size;			/* Size of file, in bytes.  */
+++    __off64_t st_size;			/* Size of file, in bytes.  */
++     __blksize_t st_blksize;		/* Optimal block size for I/O.  */
+++#ifdef __LP64__
++     int __pad2;
++-
++-    __blkcnt_t st_blocks;		/* Number 512-byte blocks allocated. */
+++#endif
+++    __blkcnt64_t st_blocks;		/* Number 512-byte blocks allocated. */
++ #ifdef __USE_XOPEN2K8
++     /* Nanosecond resolution timestamps are stored in a format
++        equivalent to 'struct timespec'.  This is the type used
++@@ -126,30 +133,22 @@ struct stat64
++        identifier 'timespec' to appear in the <sys/stat.h> header.
++        Therefore we have to handle the use of this header in strictly
++        standard-compliant sources special.  */
++-    union {
++-	    struct timespec st_atim;		/* Time of last access.  */
++-	    struct __kernel_timespec __st_atim;
++-    };
++-    union {
++-	    struct timespec st_mtim;		/* Time of last modification.  */
++-	    struct __kernel_timespec __st_mtim;
++-    };
++-    union {
++-	    struct timespec st_ctim;		/* Time of last status.  */
++-	    struct __kernel_timespec __st_ctim;
++-    };
++-# define st_atime st_atim.tv_sec	/* Backward compatibility.  */
++-# define st_mtime st_mtim.tv_sec
++-# define st_ctime st_ctim.tv_sec
+++    struct timespec st_atim;		/* Time of last access.  */
+++    struct timespec st_mtim;		/* Time of last modification.  */
+++    struct timespec st_ctim;		/* Time of last status.  */
++ #else
++-    __type3264(__time_t, st_atime);			/* Time of last access.  */
++-    __type3264(unsigned long int, st_atimensec);	/* Nsecs of last access.  */
++-    __type3264(__time_t, st_mtime);			/* Time of last modification.  */
++-    __type3264(unsigned long int, st_mtimensec);	/* Nsecs of last modification.  */
++-    __type3264(__time_t, st_ctime);			/* Time of last status change.  */
++-    __type3264(unsigned long int, st_ctimensec);	/* Nsecs of last status change.  */
+++    __time_t st_atime;                  /* Time of last access.  */
+++    unsigned long int st_atimensec;     /* Nscecs of last access.  */
+++    __time_t st_mtime;                  /* Time of last modification.  */
+++    unsigned long int st_mtimensec;     /* Nsecs of last modification.  */
+++    __time_t st_ctime;                  /* Time of last status change.  */
+++    unsigned long int st_ctimensec;     /* Nsecs of last status change.  */
++ #endif
+++#ifdef __LP64__
++     int __glibc_reserved[2];
+++#else
+++     __ino_t st_ino;
+++#endif
++   };
++ #endif
++ 
 +diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h b/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
 +index 81a8626..a2c37de 100644
 +--- a/sysdeps/unix/sysv/linux/aarch64/bits/statfs.h
@@ -192,6 +441,32 @@ index 0000000..7f7584c
 +   };
 + #endif
 + 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++index cd66504..7bc826c 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/bits/typesizes.h
++@@ -36,7 +36,7 @@
++ #define __OFF_T_TYPE		__SQUAD_TYPE
++ #define __OFF64_T_TYPE		__SQUAD_TYPE
++ #define __PID_T_TYPE		__S32_TYPE
++-#define __RLIM_T_TYPE		__ULONGWORD_TYPE
+++#define __RLIM_T_TYPE		__UQUAD_TYPE
++ #define __RLIM64_T_TYPE		__UQUAD_TYPE
++ #define	__BLKCNT_T_TYPE		__SQUAD_TYPE
++ #define	__BLKCNT64_T_TYPE	__SQUAD_TYPE
++@@ -79,10 +79,12 @@
++ /* And for __fsbilcnt_t and __fsbilcnt64_t.  */
++ # define __FSFILCNT_T_TYPE_MATCHES_FSFILCNT64_T_TYPE	1
++ 
+++#if 0
++ #if __WORDSIZE == 32
++ /* And struct timespec needs pads.  */
++ # define timespec_needs_pads	1
++ #endif
+++#endif
++ 
++ /* Number of descriptors that can fit in an `fd_set'.  */
++ #define	__FD_SETSIZE		1024
 +diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
 +index 8e900fd..ecc468e 100644
 +--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fstatfs.c
@@ -217,6 +492,139 @@ index 0000000..7f7584c
 + 
 + # if __ASSUME_STATFS64 == 0
 +       if (result == 0 || errno != ENOSYS)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
++index 83df0e4..e29fa5b 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat.c
++@@ -33,12 +33,11 @@ __fxstat (int vers, int fd, struct stat *buf)
++   if (vers == _STAT_VER_KERNEL)
++     {
++       int rc = INLINE_SYSCALL (fstat64, 2, fd, buf);
++-      if (!rc) {
++-	      conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-      }
++-
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++      if (__builtin_expect (!result, 1)
+++          && buf->__st_ino != (__ino_t) buf->st_ino)
+++        buf->st_ino = buf->__st_ino;
+++#endif
++       return rc;
++ 
++     }
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
++index f651921..8d10282 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstat64.c
++@@ -33,11 +33,10 @@ ___fxstat64 (int vers, int fd, struct stat64 *buf)
++ {
++   int result;
++   result = INLINE_SYSCALL (fstat64, 2, fd, buf);
++-  if (!result) {
++-	  conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	  conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	  conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-  }
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++  if (__builtin_expect (!result, 1) && buf->__st_ino != (__ino_t) buf->st_ino)
+++    buf->st_ino = buf->__st_ino;
+++#endif
++   return result;
++ }
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
++index fb03a7d..d655ccb 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat.c
++@@ -34,11 +34,11 @@ __fxstatat (int vers, int fd, const char *file, struct stat *buf, int flag)
++   if (vers == _STAT_VER_KERNEL)
++     {
++       int rc = INLINE_SYSCALL (fstatat64, 4, fd, file, buf, flag);
++-      if (!rc) {
++-	      conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-      }
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++      if (__builtin_expect (!result, 1)
+++          && buf->__st_ino != (__ino_t) buf->st_ino)
+++        buf->st_ino = buf->__st_ino;
+++#endif
++       return rc;
++     }
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
++index 9d36ff4..325a492 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/fxstatat64.c
++@@ -36,17 +36,12 @@ __fxstatat64 (int vers, int fd, const char *file, struct stat64 *st, int flag)
++     return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
++ 
++   int result;
++-  INTERNAL_SYSCALL_DECL (err);
++-
++-  result = INTERNAL_SYSCALL (fstatat64, err, 4, fd, file, st, flag);
++-  if (!__builtin_expect (INTERNAL_SYSCALL_ERROR_P (result, err), 1)) {
++-      conv_timespec(&st->st_atim, &st->__st_atim);
++-      conv_timespec(&st->st_mtim, &st->__st_mtim);
++-      conv_timespec(&st->st_ctim, &st->__st_ctim);
++-      return 0;
++-  }
++-  else
++-    return INLINE_SYSCALL_ERROR_RETURN_VALUE (INTERNAL_SYSCALL_ERRNO (result,
++-								      err));
+++
+++  result = INLINE_SYSCALL (fstatat64, 4, fd, file, st, flag);
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++  if (__builtin_expect (!result, 1) && buf->__st_ino != (__ino_t) buf->st_ino)
+++    buf->st_ino = buf->__st_ino;
+++#endif
+++  return result;
++ }
++ libc_hidden_def (__fxstatat64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
++index e8de70e..b98b36e 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/lxstat.c
++@@ -34,11 +34,11 @@ __lxstat (int vers, const char *name, struct stat *buf)
++     {
++       int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf,
++                                AT_SYMLINK_NOFOLLOW);
++-      if (!rc) {
++-	      conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-      }
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++      if (__builtin_expect (!result, 1)
+++          && buf->__st_ino != (__ino_t) buf->st_ino)
+++        buf->st_ino = buf->__st_ino;
+++#endif
++       return rc;
++     }
++   errno = EINVAL;
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/renameat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/renameat.c
++new file mode 100644
++index 0000000..0c65643
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/renameat.c
++@@ -0,0 +1,14 @@
+++#include <stdio.h>
+++#include <fcntl.h>
+++#include <sysdep.h>
+++#include <errno.h>
+++
+++int
+++renameat (int oldfd, const char *old, int newfd, const char *new)
+++{
+++#ifdef __NR_renameat
+++  return INLINE_SYSCALL (renameat, 4, oldfd, old, newfd, new);
+++#else
+++  return INLINE_SYSCALL (renameat2, 5, oldfd, old, newfd, new, 0);
+++#endif
+++}
 +diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
 +index bf70a7a..9f1a817 100644
 +--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/statfs.c
@@ -242,6 +650,115 @@ index 0000000..7f7584c
 ++  return INLINE_SYSCALL (statfs64, 3, file, sizeof (*buf), buf);
 + }
 + weak_alias (__statfs64,statfs64)
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
++index b4e8423..706728f 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat.c
++@@ -33,11 +33,11 @@ __xstat (int vers, const char *name, struct stat *buf)
++   if (vers == _STAT_VER_KERNEL)
++     {
++       int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf, 0);
++-      if (!rc) {
++-	      conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	      conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	      conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-      }
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++      if (__builtin_expect (!result, 1)
+++	  && buf->__st_ino != (__ino_t) buf->st_ino)
+++        buf->st_ino = buf->__st_ino;
+++#endif
++       return rc;
++     }
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
++index e4f4cd5..72f9b4d 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/ilp32/xstat64.c
++@@ -32,12 +32,11 @@ __xstat64 (int vers, const char *name, struct stat64 *buf)
++ {
++   if (vers == _STAT_VER_KERNEL) {
++     int rc = INLINE_SYSCALL (fstatat64, 4, AT_FDCWD, name, buf, 0);
++-    if (!rc) {
++-	    conv_timespec(&buf->st_atim, &buf->__st_atim);
++-	    conv_timespec(&buf->st_mtim, &buf->__st_mtim);
++-	    conv_timespec(&buf->st_ctim, &buf->__st_ctim);
++-    }
++-
+++#if defined _HAVE_STAT64___ST_INO && !__ASSUME_ST_INO_64_BIT
+++    if (__builtin_expect (!result, 1)
+++        && buf->__st_ino != (__ino_t) buf->st_ino)
+++      buf->st_ino = buf->__st_ino;
+++#endif
++     return rc;
++   }
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/ipc_priv.h b/sysdeps/unix/sysv/linux/aarch64/ipc_priv.h
++new file mode 100644
++index 0000000..ed67b5a
++--- /dev/null
+++++ b/sysdeps/unix/sysv/linux/aarch64/ipc_priv.h
++@@ -0,0 +1,8 @@
+++
+++#include <sys/ipc.h>  /* For __key_t  */
+++
+++#ifdef __LP64__
+++# define __IPC_64      0x0
+++#else /* __ILP32  */
+++# define __IPC_64      0x100
+++#endif
++diff --git a/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h b/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
++index 7b3023b..70c566b 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/kernel_sigaction.h
++@@ -5,8 +5,8 @@
++    Note the ILP32 struct uses the same struct as LP64
++    which is why the fields are 64bit in size. */
++ struct kernel_sigaction {
++-	unsigned long long k_sa_handler;
++-	unsigned long long sa_flags;
++-	unsigned long long sa_restorer;
+++	__sighandler_t k_sa_handler;
+++	unsigned long sa_flags;
+++	void (*sa_restorer) (void);
++ 	sigset_t sa_mask;
++ };
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sigaction.c b/sysdeps/unix/sysv/linux/aarch64/sigaction.c
++index 40a327f..92a019c 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sigaction.c
+++++ b/sysdeps/unix/sysv/linux/aarch64/sigaction.c
++@@ -39,12 +39,12 @@ __libc_sigaction (int sig, const struct sigaction *act, struct sigaction *oact)
++ 
++   if (act)
++     {
++-      kact.k_sa_handler = (unsigned long long)(uintptr_t)act->sa_handler;
+++      kact.k_sa_handler = act->sa_handler;
++       memcpy (&kact.sa_mask, &act->sa_mask, sizeof (sigset_t));
++       kact.sa_flags = act->sa_flags;
++ #ifdef HAVE_SA_RESTORER
++       if (kact.sa_flags & SA_RESTORER)
++-	kact.sa_restorer = (unsigned long long)(uintptr_t)act->sa_restorer;
+++	kact.sa_restorer = act->sa_restorer;
++ #endif
++     }
++ 
++diff --git a/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h b/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
++index ee54222..d1185fa 100644
++--- a/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
+++++ b/sysdeps/unix/sysv/linux/aarch64/sigcontextinfo.h
++@@ -16,10 +16,11 @@
++    License along with the GNU C Library; if not, see
++    <http://www.gnu.org/licenses/>.  */
++ 
+++#include <stdint.h>
++ #include <sys/ucontext.h>
++ 
++ #define SIGCONTEXT siginfo_t *_si, struct ucontext *
++-#define GET_PC(ctx) ((void *) (size_t) (ctx)->uc_mcontext.pc)
+++#define GET_PC(ctx) ((void *) (uintptr_t) (ctx)->uc_mcontext.pc)
++ 
++ /* There is no reliable way to get the sigcontext unless we use a
++    three-argument signal handler.  */
 +diff --git a/sysdeps/unix/sysv/linux/aarch64/sysdep.h b/sysdeps/unix/sysv/linux/aarch64/sysdep.h
 +index 42f89c8..73f71d7 100644
 +--- a/sysdeps/unix/sysv/linux/aarch64/sysdep.h
@@ -358,6 +875,18 @@ index 0000000..7f7584c
 + #  define F_GETLK	5	/* Get record locking info.  */
 + #  define F_SETLK	6	/* Set record locking info (non-blocking).  */
 + #  define F_SETLKW	7	/* Set record locking info (blocking).	*/
++diff --git a/sysdeps/unix/sysv/linux/generic/kernel_stat.h b/sysdeps/unix/sysv/linux/generic/kernel_stat.h
++index be12819..6d28ba2 100644
++--- a/sysdeps/unix/sysv/linux/generic/kernel_stat.h
+++++ b/sysdeps/unix/sysv/linux/generic/kernel_stat.h
++@@ -21,6 +21,4 @@
++ #define STAT_IS_KERNEL_STAT 1
++ 
++ /* We provide separate 32-bit API versions that check for EOVERFLOW. */
++-#if __WORDSIZE == 64
++-# define XSTAT_IS_XSTAT64 1
++-#endif
+++#define XSTAT_IS_XSTAT64 1
 +diff --git a/sysdeps/unix/sysv/linux/generic/rename.c b/sysdeps/unix/sysv/linux/generic/rename.c
 +index 174c147..39b6940 100644
 +--- a/sysdeps/unix/sysv/linux/generic/rename.c
@@ -376,10 +905,10 @@ index 0000000..7f7584c
 + }
 +diff --git a/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c b/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
 +new file mode 100644
-+index 0000000..2bd2bf1
++index 0000000..e878a6a
 +--- /dev/null
 ++++ b/sysdeps/unix/sysv/linux/generic/wordsize-32/getrlimit.c
-+@@ -0,0 +1,43 @@
++@@ -0,0 +1,55 @@
 ++/* Copyright (C) 2010-2016 Free Software Foundation, Inc.
 ++   This file is part of the GNU C Library.
 ++
@@ -408,15 +937,27 @@ index 0000000..7f7584c
 ++int
 ++__getrlimit (enum __rlimit_resource resource, struct rlimit *rlimits)
 ++{
-++#ifdef __ASSUME_PRLIMIT64
-++  return INLINE_SYSCALL (prlimit64, 4, 0, resource, NULL, rlimits);
-++#else
+++#if 1
 ++# ifdef __NR_prlimit64
-++  int res = INLINE_SYSCALL (prlimit64, 4, 0, resource, NULL, rlimits);
-++  if (res == 0 || errno != ENOSYS)
-++    return res;
-++# endif
-++  return -2;
+++  struct rlimit64 rlimits64;
+++  int res = INLINE_SYSCALL (prlimit64, 4, 0, resource, NULL, &rlimits64);
+++
+++  if (rlimits64.rlim_cur == RLIM64_INFINITY)
+++    rlimits->rlim_cur = RLIM_INFINITY;
+++  else
+++    rlimits->rlim_cur = rlimits64.rlim_cur;
+++
+++  if (rlimits64.rlim_max == RLIM64_INFINITY)
+++    rlimits->rlim_max = RLIM_INFINITY;
+++  else
+++    rlimits->rlim_max = rlimits64.rlim_max;
+++
+++  return res;
+++#else
+++  return -1;
+++#endif
+++#else
+++  return INLINE_SYSCALL (getrlimit, 2, resource, &rlimits);
 ++#endif
 ++}
 ++libc_hidden_def (__getrlimit)
@@ -425,7 +966,7 @@ index 0000000..7f7584c
 ++#endif
 +diff --git a/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c b/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
 +new file mode 100644
-+index 0000000..fcceb03
++index 0000000..086bab6
 +--- /dev/null
 ++++ b/sysdeps/unix/sysv/linux/generic/wordsize-32/setrlimit.c
 +@@ -0,0 +1,48 @@
@@ -474,11 +1015,41 @@ index 0000000..7f7584c
 ++  if (res == 0 || errno != ENOSYS)
 ++    return res;
 ++# endif
-++  return -2;
+++  return -1;
 ++}
 ++weak_alias (__setrlimit, setrlimit)
++diff --git a/sysdeps/unix/sysv/linux/setrlimit64.c b/sysdeps/unix/sysv/linux/setrlimit64.c
++index 5f444d2..73fb3e8 100644
++--- a/sysdeps/unix/sysv/linux/setrlimit64.c
+++++ b/sysdeps/unix/sysv/linux/setrlimit64.c
++@@ -27,25 +27,5 @@
++ int
++ setrlimit64 (enum __rlimit_resource resource, const struct rlimit64 *rlimits)
++ {
++-#ifdef __ASSUME_PRLIMIT64
++   return INLINE_SYSCALL (prlimit64, 4, 0, resource, rlimits, NULL);
++-#else
++-# ifdef __NR_prlimit64
++-  int res = INLINE_SYSCALL (prlimit64, 4, 0, resource, rlimits, NULL);
++-  if (res == 0 || errno != ENOSYS)
++-    return res;
++-# endif
++-  struct rlimit rlimits32;
++-
++-  if (rlimits->rlim_cur >= RLIM_INFINITY)
++-    rlimits32.rlim_cur = RLIM_INFINITY;
++-  else
++-    rlimits32.rlim_cur = rlimits->rlim_cur;
++-  if (rlimits->rlim_max >= RLIM_INFINITY)
++-    rlimits32.rlim_max = RLIM_INFINITY;
++-  else
++-    rlimits32.rlim_max = rlimits->rlim_max;
++-
++-  return __setrlimit (resource, &rlimits32);
++-#endif
++ }
 +-- 
-+2.5.0
++1.9.3
 +
 diff --git a/meta/recipes-core/glibc/ilp32_patches.inc b/meta/recipes-core/glibc/ilp32_patches.inc
 index 8f71401..7461ac6 100644
@@ -490,5 +1061,5 @@ index 8f71401..7461ac6 100644
  SRC_URI += "file://ilp32_patches/0027-Fix-PTRDIFF_MIN-PTRDIFF_MIN-and-PTRDIFF_MIN-for-ILP3.patch"
 +SRC_URI += "file://ilp32_patches/0028-ltplite-issues-fix-patch.patch"
 -- 
-2.5.0
+1.9.3
 
