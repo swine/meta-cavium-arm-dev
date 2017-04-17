@@ -1,0 +1,23 @@
+From 4b722c5c6b650acfc37e3f03297a1730ca53fc3b Mon Sep 17 00:00:00 2001
+From: Manish jaggi <mjaggi@cavium.com>
+Date: Mon, 17 Apr 2017 03:09:52 -0700
+Subject: [PATCH] Add INSANE_SKIP
+
+Signed-off-by: manish jaggi <mjaggi@cavium.com>
+---
+ meta/recipes-devtools/gcc/libgcc.inc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/meta/recipes-devtools/gcc/libgcc.inc b/meta/recipes-devtools/gcc/libgcc.inc
+index 4770394..e419fc3 100644
+--- a/meta/recipes-devtools/gcc/libgcc.inc
++++ b/meta/recipes-devtools/gcc/libgcc.inc
+@@ -41,4 +41,5 @@ do_package_write_deb[depends] += "virtual/${MLPREFIX}libc:do_packagedata"
+ do_package_write_rpm[depends] += "virtual/${MLPREFIX}libc:do_packagedata"
+ 
+ INSANE_SKIP_${PN}-dev = "staticdev"
++INSANE_SKIP_${PN} = "staticdev"
+ 
+-- 
+1.9.3
+
