@@ -7,4 +7,10 @@ do_buildFIT() {
         mkimage -f ${S}/81xx.its  ${DEPLOY_DIR_IMAGE}/${MACHINE}.itb
 }
 
+do_update_dyn_linker() {
+ln -s ../libilp32/ld-2.23.so  ${IMAGE_ROOTFS}/lib/ld-linux-aarch64_ilp32.so.1
+}
+
+IMAGE_PREPROCESS_COMMAND += "do_update_dyn_linker"
+
 addtask buildFIT after do_build
