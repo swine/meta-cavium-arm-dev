@@ -1,0 +1,33 @@
+From c294b3e27a617e374224134235b940a466814089 Mon Sep 17 00:00:00 2001
+From: "Qi.Chen@windriver.com" <Qi.Chen@windriver.com>
+Date: Mon, 26 Sep 2016 11:20:28 +0800
+Subject: [PATCH] meta-environment: ensure corret TOOLCHAIN_CONFIGSITE_NOCACHE
+ value
+
+Expand TOOLCHAIN_CONFIGSITE_NOCACHE value immediately before inheriting
+cross-canadian to avoid HOST_ARCH being changed from TARGET_ARCH to SDK_ARCH,
+thus ensuring its correct value.
+
+[YOCTO #10255]
+
+Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+---
+ meta/recipes-core/meta/meta-environment.bb | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/meta/recipes-core/meta/meta-environment.bb b/meta/recipes-core/meta/meta-environment.bb
+index 49d45f6..d9e045f 100644
+--- a/meta/recipes-core/meta/meta-environment.bb
++++ b/meta/recipes-core/meta/meta-environment.bb
+@@ -12,6 +12,8 @@ REAL_MULTIMACH_TARGET_SYS = "${TUNE_PKGARCH}${TARGET_VENDOR}-${TARGET_OS}"
+ 
+ inherit toolchain-scripts
+ TOOLCHAIN_NEED_CONFIGSITE_CACHE_append = " zlib"
++# Need to expand here before cross-candian changes HOST_ARCH -> SDK_ARCH
++TOOLCHAIN_CONFIGSITE_NOCACHE := "${TOOLCHAIN_CONFIGSITE_NOCACHE}"
+ 
+ SDK_DIR = "${WORKDIR}/sdk"
+ SDK_OUTPUT = "${SDK_DIR}/image"
+-- 
+1.9.3
+
